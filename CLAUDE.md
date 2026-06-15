@@ -9,7 +9,7 @@ Source of truth for the original plan: `../implementation_plan.md`.
 - **Next.js 16.2.9** (App Router) + **React 19.2** — NOTE: this Next.js has breaking changes vs older training data. Read `node_modules/next/dist/docs/` before writing Next code (see AGENTS.md).
 - **Supabase** (`@supabase/ssr`) — Postgres + Auth + (intended) Realtime.
 - **Tailwind CSS 4** (PostCSS plugin), **next-themes** dark/light, **lucide-react** icons.
-- Hosting target: **Vercel**. DB: **Supabase free tier**.
+- Hosting: **Vercel** — https://kjss-web-app.vercel.app. DB: **Supabase free tier**. GitHub: https://github.com/kjsyncstudio/KJSS-WEBApp (public).
 
 ## Run
 ```bash
