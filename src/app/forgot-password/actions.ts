@@ -15,7 +15,7 @@ export async function resetPassword(formData: FormData) {
     })
 
     if (error) {
-      redirect('/forgot-password?error=true')
+      redirect(`/forgot-password?error=true&msg=${encodeURIComponent(error.message)}`)
     }
 
     redirect('/forgot-password?sent=true')
