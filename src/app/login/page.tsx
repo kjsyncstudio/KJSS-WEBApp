@@ -1,7 +1,9 @@
 import { login } from './actions'
 import { ThemeToggle } from '@/components/theme-toggle'
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const params = await searchParams
+  const hasError = params?.error === 'true'
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Decorative background elements */}
@@ -45,7 +47,11 @@ export default function LoginPage() {
             />
           </div>
 
-          <button 
+          {hasError && (
+            <p className="text-sm text-red-500 text-center -mb-2">Invalid email or password.</p>
+          )}
+
+          <button
             formAction={login}
             className="w-full py-2.5 px-4 bg-primary text-primary-foreground font-semibold rounded-md shadow-md hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-[0.98] mt-2"
           >
