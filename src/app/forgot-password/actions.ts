@@ -1,19 +1,26 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { isRedirectError } from 'next/dist/client/components/redirect-error'
 import { createClient } from '@/utils/supabase/server'
 
 export async function resetPassword(formData: FormData) {
-  const supabase = await createClient()
-  const email = formData.get('email') as string
+  try {
+    const supabase = await createClient()
+    const email = formData.get('email') as string
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kjss-web-app.vercel.app'
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/update-password`,
-  })
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${siteUrl}/auth/callback?next=/update-password`,
+    })
 
-  if (error) {
+    if (error) {
+      redirect('/forgot-password?error=true')
+    }
+
+    redirect('/forgot-password?sent=true')
+  } catch (err) {
+    if (isRedirectError(err)) throw err
     redirect('/forgot-password?error=true')
   }
-
-  redirect('/forgot-password?sent=true')
 }
