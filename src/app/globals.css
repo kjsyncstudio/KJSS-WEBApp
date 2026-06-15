@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f0f4f8; /* Bright futuristic light mode */
+  --foreground: #0f172a; /* Slate 900 for high contrast text */
+  --primary: #0ea5e9; /* Sky 500 for vibrant accents */
+  --primary-foreground: #ffffff;
+  --accent: #8b5cf6; /* Violet 500 for secondary accents */
+  --accent-foreground: #ffffff;
+  --muted: #e2e8f0;
+  --muted-foreground: #64748b;
+  --border: #cbd5e1;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: #09090b; /* Very dark background for dark mode */
+  --foreground: #fafafa;
+  --primary: #38bdf8; /* Sky 400 */
+  --primary-foreground: #09090b;
+  --accent: #a78bfa; /* Violet 400 */
+  --accent-foreground: #09090b;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --border: #27272a;
+  --card: #18181b; /* slightly lighter than background */
+  --card-foreground: #fafafa;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Base styles */
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Glassmorphism utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass {
+  background: rgba(24, 24, 27, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
