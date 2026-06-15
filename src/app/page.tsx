@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Home() {
@@ -21,9 +22,9 @@ export default function Home() {
           <p className="text-muted-foreground">Manage your projects and clients in real-time.</p>
         </div>
 
-        <button className="w-full py-3 px-4 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-[0.98]">
+        <Link href="/login" className="w-full py-3 px-4 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-[0.98] text-center block">
           Sign In
-        </button>
+        </Link>
 
         <p className="text-sm text-muted-foreground mt-4">
           Contact an administrator to get an account.
