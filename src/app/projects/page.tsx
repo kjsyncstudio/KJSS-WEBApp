@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Header from '@/components/header'
 import { ProjectForm } from './project-form'
 import { ProjectList } from './project-list'
+import Link from 'next/link'
 
 export default async function ProjectsPage() {
   const supabase = await createClient()
@@ -53,7 +54,14 @@ export default async function ProjectsPage() {
               Manage your projects, view status, and collaborate.
             </p>
           </div>
-          {canManage && <ProjectForm clients={clients} />}
+          {canManage && (
+            <div className="flex gap-3">
+              <Link href="/projects/batch" className="border border-border px-4 py-2 rounded-md font-medium text-sm hover:bg-muted/50 transition-colors">
+                Batch Add
+              </Link>
+              <ProjectForm clients={clients} />
+            </div>
+          )}
         </div>
 
         <ProjectList projects={projects || []} canManage={canManage} />
