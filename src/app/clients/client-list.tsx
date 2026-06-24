@@ -174,13 +174,19 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
               </span>
 
               {canManage && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleDelete(client.id) }}
-                  disabled={deletingId === client.id}
-                  className="text-xs text-destructive hover:underline opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
-                >
-                  {deletingId === client.id ? 'Deleting...' : 'Delete'}
-                </button>
+                <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={(e) => { e.stopPropagation(); setEditingClient(client) }}
+                    className="text-xs text-primary hover:underline">
+                    Edit
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete(client.id) }}
+                    disabled={deletingId === client.id}
+                    className="text-xs text-destructive hover:underline disabled:opacity-50"
+                  >
+                    {deletingId === client.id ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -211,12 +217,13 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{client.industry}</td>
                   <td className="px-4 py-3 text-muted-foreground">{client.year_start} - {client.year_end || 'Present'}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
                     {canManage && (
-                      <button onClick={() => handleDelete(client.id)} disabled={deletingId === client.id}
-                        className="text-xs text-destructive hover:underline opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50">
-                        Delete
-                      </button>
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => setEditingClient(client)} className="text-xs text-primary hover:underline mr-3">Edit</button>
+                        <button onClick={() => handleDelete(client.id)} disabled={deletingId === client.id}
+                          className="text-xs text-destructive hover:underline disabled:opacity-50">Delete</button>
+                      </span>
                     )}
                   </td>
                 </tr>
@@ -236,10 +243,11 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
               <span className="text-xs text-muted-foreground hidden sm:block truncate max-w-[10rem]">{client.industry}</span>
               <span className="text-xs text-muted-foreground hidden md:block">{client.year_start} - {client.year_end || 'Present'}</span>
               {canManage && (
-                <button onClick={() => handleDelete(client.id)} disabled={deletingId === client.id}
-                  className="text-xs text-destructive hover:underline opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 ml-1">
-                  Delete
-                </button>
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 whitespace-nowrap">
+                  <button onClick={() => setEditingClient(client)} className="text-xs text-primary hover:underline mr-3">Edit</button>
+                  <button onClick={() => handleDelete(client.id)} disabled={deletingId === client.id}
+                    className="text-xs text-destructive hover:underline disabled:opacity-50">Delete</button>
+                </span>
               )}
             </div>
           ))}
