@@ -23,11 +23,21 @@ type Row = {
   type: string
   status: string
   description: string
+  projectDate: string
   thumbnail: string | null
 }
 
-function emptyRow(id: number): Row {
-  return { id, title: '', clientId: '', type: 'Website', status: 'Pending', description: '', thumbnail: null }
+function emptyRow(id: number, base?: Row): Row {
+  return {
+    id,
+    title: base?.title ?? '',
+    clientId: base?.clientId ?? '',
+    type: base?.type ?? 'Media Production',
+    status: base?.status ?? 'Pending',
+    description: base?.description ?? '',
+    projectDate: base?.projectDate ?? '',
+    thumbnail: base?.thumbnail ?? null,
+  }
 }
 
 export function BatchForm({ clients }: { clients: Client[] }) {
@@ -37,7 +47,8 @@ export function BatchForm({ clients }: { clients: Client[] }) {
 
   function addRow() {
     if (rows.length >= MAX_ROWS) return
-    setRows(r => [...r, emptyRow(Date.now())])
+    const last = rows[rows.length - 1]
+    setRows(r => [...r, emptyRow(Date.now(), last)])
   }
 
   function removeRow(id: number) {
@@ -65,6 +76,7 @@ export function BatchForm({ clients }: { clients: Client[] }) {
       fd.set(`type_${i}`, row.type)
       fd.set(`status_${i}`, row.status)
       fd.set(`description_${i}`, row.description)
+      fd.set(`projectDate_${i}`, row.projectDate)
     })
     await batchAddProjects(fd)
     setSubmitting(false)
@@ -76,10 +88,7 @@ export function BatchForm({ clients }: { clients: Client[] }) {
         <div
           key={row.id}
           className="glass border border-border/50 rounded-xl flex gap-3 p-3 items-stretch"
-          style={{
-            animation: `slideDown 0.3s ease both`,
-            animationDelay: `${i * 60}ms`,
-          }}
+          style={{ animation: `slideDown 0.3s ease both`, animationDelay: `${i * 60}ms` }}
         >
           {/* Thumbnail */}
           <button
@@ -94,14 +103,12 @@ export function BatchForm({ clients }: { clients: Client[] }) {
           </button>
           <input
             ref={el => { fileRefs.current[row.id] = el }}
-            type="file"
-            accept="image/*"
-            className="hidden"
+            type="file" accept="image/*" className="hidden"
             onChange={e => handleThumb(row.id, e.target.files?.[0] ?? null)}
           />
 
           {/* Title + meta */}
-          <div className="flex flex-col gap-1.5 w-48 shrink-0 justify-center">
+          <div className="flex flex-col gap-1.5 w-52 shrink-0 justify-center">
             <input
               placeholder="Project title *"
               required
@@ -111,8 +118,7 @@ export function BatchForm({ clients }: { clients: Client[] }) {
             />
             <div className="flex gap-1.5">
               <select
-                value={row.clientId}
-                required
+                value={row.clientId} required
                 onChange={e => updateRow(row.id, 'clientId', e.target.value)}
                 className="bg-background/50 border border-border rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary/50 flex-1 min-w-0"
               >
@@ -126,6 +132,8 @@ export function BatchForm({ clients }: { clients: Client[] }) {
               >
                 {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
+            </div>
+            <div className="flex gap-1.5">
               <select
                 value={row.status}
                 onChange={e => updateRow(row.id, 'status', e.target.value)}
@@ -133,34 +141,36 @@ export function BatchForm({ clients }: { clients: Client[] }) {
               >
                 {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
+              <input
+                type="date"
+                value={row.projectDate}
+                onChange={e => updateRow(row.id, 'projectDate', e.target.value)}
+                className="bg-background/50 border border-border rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary/50 flex-1 min-w-0"
+              />
             </div>
           </div>
 
-          {/* Description */}
+          {/* Description — half width */}
           <textarea
             placeholder="Description (optional)"
             value={row.description}
             onChange={e => updateRow(row.id, 'description', e.target.value)}
             rows={3}
-            className="flex-1 bg-background/50 border border-border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+            className="w-1/2 bg-background/50 border border-border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
           />
 
           {/* Remove */}
           <button
-            type="button"
-            onClick={() => removeRow(row.id)}
+            type="button" onClick={() => removeRow(row.id)}
             className="text-muted-foreground hover:text-red-500 transition-colors self-start text-lg leading-none mt-0.5"
             title="Remove row"
-          >
-            ×
-          </button>
+          >×</button>
         </div>
       ))}
 
       <div className="flex items-center justify-between pt-2">
         <button
-          type="button"
-          onClick={addRow}
+          type="button" onClick={addRow}
           disabled={rows.length >= MAX_ROWS}
           className="text-sm text-primary hover:underline disabled:opacity-40 disabled:cursor-not-allowed"
         >
@@ -171,8 +181,7 @@ export function BatchForm({ clients }: { clients: Client[] }) {
             Cancel
           </a>
           <button
-            type="submit"
-            disabled={submitting || rows.length === 0}
+            type="submit" disabled={submitting || rows.length === 0}
             className="bg-primary text-primary-foreground px-6 py-2 rounded-md text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             {submitting ? 'Saving…' : `Save ${rows.length} Project${rows.length !== 1 ? 's' : ''}`}

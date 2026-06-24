@@ -74,6 +74,10 @@ export function ProjectForm({ clients }: { clients: Client[] }) {
             </select>
           </div>
           <div className="flex flex-col gap-2">
+            <label htmlFor="projectDate" className="text-sm font-medium">Project Date <span className="text-muted-foreground font-normal">(optional)</span></label>
+            <input type="date" id="projectDate" name="projectDate" className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+          </div>
+          <div className="flex flex-col gap-2">
             <label htmlFor="description" className="text-sm font-medium">Description</label>
             <textarea id="description" name="description" rows={3} className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"></textarea>
           </div>

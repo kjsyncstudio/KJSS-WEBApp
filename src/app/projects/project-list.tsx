@@ -3,6 +3,7 @@
 import { deleteProject, updateProjectStatus } from './actions'
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 type Project = {
   id: string
@@ -56,6 +57,7 @@ function CompactIcon({ active }: { active: boolean }) {
 }
 
 export function ProjectList({ projects, canManage }: { projects: Project[]; canManage: boolean }) {
+  const router = useRouter()
   const [filter, setFilter] = useState<string>('All')
   const [view, setView] = useState<ViewMode>('card')
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -135,13 +137,17 @@ export function ProjectList({ projects, canManage }: { projects: Project[]; canM
       ) : view === 'card' ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map(project => (
-            <div key={project.id} className="glass p-6 rounded-2xl border-border/50 flex flex-col group relative overflow-hidden transition-all hover:shadow-xl hover:border-primary/20">
+            <div
+              key={project.id}
+              onClick={() => router.push(`/projects/${project.id}`)}
+              className="glass p-6 rounded-2xl border-border/50 flex flex-col group relative overflow-hidden cursor-pointer
+                transition-all duration-200
+                hover:shadow-[0_0_32px_4px_hsl(var(--primary)/0.18)] hover:border-primary/40 hover:-translate-y-0.5"
+            >
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="font-semibold text-xl leading-tight mb-1">
-                    <Link href={`/projects/${project.id}`} className="hover:text-primary transition-colors">
-                      {project.title}
-                    </Link>
+                  <h3 className="font-semibold text-xl leading-tight mb-1 group-hover:text-primary transition-colors">
+                    {project.title}
                   </h3>
                   <div className="text-sm text-muted-foreground flex items-center gap-2">
                     <span>{project.clients?.name || 'Unknown'}</span>
@@ -157,20 +163,17 @@ export function ProjectList({ projects, canManage }: { projects: Project[]; canM
                 {project.description || 'No description.'}
               </p>
               <div className="mt-auto pt-4 border-t border-border/50 flex items-center justify-between">
-                <StatusSelect project={project} />
-                {!canManage && (
-                  <Link href={`/projects/${project.id}`} className="text-xs font-medium text-primary hover:underline">
-                    View Details →
-                  </Link>
-                )}
+                <div onClick={e => e.stopPropagation()}>
+                  <StatusSelect project={project} />
+                </div>
                 {canManage && (
-                  <div className="flex gap-3">
-                    <Link href={`/projects/${project.id}`} className="text-xs text-primary hover:underline">Open</Link>
-                    <button onClick={() => handleDelete(project.id)} disabled={deletingId === project.id}
-                      className="text-xs text-destructive hover:underline opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50">
-                      Delete
-                    </button>
-                  </div>
+                  <button
+                    onClick={e => { e.stopPropagation(); handleDelete(project.id) }}
+                    disabled={deletingId === project.id}
+                    className="text-xs text-destructive hover:underline opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                  >
+                    Delete
+                  </button>
                 )}
               </div>
             </div>

@@ -12,13 +12,15 @@ export async function addProject(formData: FormData) {
   const clientId = formData.get('clientId') as string
   const status = formData.get('status') as 'Active' | 'Done' | 'Shelved' | 'Pending'
   const description = formData.get('description') as string
+  const projectDate = formData.get('projectDate') as string
 
   const { data, error } = await supabase.from('projects').insert({
     title,
     type,
     client_id: clientId,
     status,
-    description
+    description,
+    project_date: projectDate || null,
   }).select().single()
 
   if (error) {
