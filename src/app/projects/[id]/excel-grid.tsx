@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { saveGridCell, updateGridColumn } from './notes-actions'
+import { useProjectLive } from './project-live'
 
 type GridColumn = {
   col_index: number
@@ -40,6 +41,38 @@ export function ExcelGrid({
   const [cells, setCells] = useState<GridCell[]>(initialCells)
 
   const [savingCells, setSavingCells] = useState<Record<string, boolean>>({})
+  const [editingKey, setEditingKey] = useState<string | null>(null)
+
+  const live = useProjectLive()
+
+  // Live: apply remote cell + column changes (skip the cell you're editing)
+  useEffect(() => {
+    if (!live) return
+    const offCell = live.onRemote('project_grid_cells', row => {
+      const r = row.row_index as number, c = row.col_index as number
+      const key = `${r}-${c}`
+      if (editingKey === key) return
+      setRowCount(prev => Math.max(prev, r + 1))
+      setCells(prev => {
+        const i = prev.findIndex(x => x.row_index === r && x.col_index === c)
+        const next = [...prev]
+        if (i >= 0) next[i] = { row_index: r, col_index: c, value: (row.value as string) ?? '' }
+        else next.push({ row_index: r, col_index: c, value: (row.value as string) ?? '' })
+        return next
+      })
+    })
+    const offCol = live.onRemote('project_grid_columns', row => {
+      const c = row.col_index as number
+      setColumns(prev => {
+        const i = prev.findIndex(x => x.col_index === c)
+        const next = [...prev]
+        if (i >= 0) next[i] = { col_index: c, header: (row.header as string) ?? '' }
+        else next.push({ col_index: c, header: (row.header as string) ?? '' })
+        return next
+      })
+    })
+    return () => { offCell(); offCol() }
+  }, [live, editingKey])
 
   // Add Row
   function handleAddRow() {
@@ -143,17 +176,21 @@ export function ExcelGrid({
                 </td>
                 {columns.map((col) => {
                   const cell = cells.find(c => c.row_index === rIdx && c.col_index === col.col_index)
-                  const isSaving = savingCells[`${rIdx}-${col.col_index}`]
-                  
+                  const key = `${rIdx}-${col.col_index}`
+                  const isSaving = savingCells[key]
+                  const lockedBy = live?.lockedByOther(`cell-${key}`) ?? null
+
                   return (
-                    <td key={col.col_index} className="border-r border-border/50 relative p-0 group">
+                    <td key={col.col_index} className="border-r border-border/50 relative p-0 group" title={lockedBy ? `${lockedBy} is editing` : undefined}>
                       <input
                         type="text"
                         value={cell?.value || ''}
                         onChange={(e) => handleCellChange(rIdx, col.col_index, e.target.value)}
-                        disabled={!canManage}
-                        className={`w-full bg-transparent px-4 py-2 focus:outline-none focus:bg-secondary/20 transition-colors ${isSaving ? 'opacity-50' : ''}`}
-                        placeholder="..."
+                        onFocus={() => { setEditingKey(key); live?.lock(`cell-${key}`) }}
+                        onBlur={() => { setEditingKey(null); live?.unlock(`cell-${key}`) }}
+                        disabled={!canManage || !!lockedBy}
+                        className={`w-full bg-transparent px-4 py-2 focus:outline-none focus:bg-secondary/20 transition-colors ${isSaving ? 'opacity-50' : ''} ${lockedBy ? 'bg-amber-500/10' : ''}`}
+                        placeholder={lockedBy ? '🔒' : '...'}
                       />
                     </td>
                   )

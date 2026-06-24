@@ -8,6 +8,7 @@ import { ProjectLinks } from './project-links'
 import { GuestToggle } from './guest-toggle'
 import { ProjectThumbnail } from './project-thumbnail'
 import { ProjectDescription } from './project-description'
+import { ProjectLiveProvider } from './project-live'
 
 export default async function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
@@ -138,37 +139,39 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
           </div>
         </div>
 
-        <ProjectThumbnail
-          projectId={project.id}
-          thumbnailUrl={project.thumbnail_url ?? null}
-          canManage={canManage}
-        />
+        <ProjectLiveProvider projectId={project.id} userEmail={user.email ?? user.id}>
+          <ProjectThumbnail
+            projectId={project.id}
+            thumbnailUrl={project.thumbnail_url ?? null}
+            canManage={canManage}
+          />
 
-        <ProjectDescription
-          projectId={project.id}
-          initial={project.description || ''}
-          canManage={canManage}
-        />
+          <ProjectDescription
+            projectId={project.id}
+            initial={project.description || ''}
+            canManage={canManage}
+          />
 
-        <ProjectLinks 
-          projectId={project.id}
-          uploadLinks={uploadLinks || []}
-          finalUrls={finalUrls || []}
-          canManage={canManage}
-        />
+          <ProjectLinks
+            projectId={project.id}
+            uploadLinks={uploadLinks || []}
+            finalUrls={finalUrls || []}
+            canManage={canManage}
+          />
 
-        <TextPad 
-          projectId={project.id} 
-          initialContent={textNote?.content || ''} 
-          canManage={canManage} 
-        />
+          <TextPad
+            projectId={project.id}
+            initialContent={textNote?.content || ''}
+            canManage={canManage}
+          />
 
-        <ExcelGrid 
-          projectId={project.id}
-          initialColumns={gridColumns || []}
-          initialCells={gridCells || []}
-          canManage={canManage}
-        />
+          <ExcelGrid
+            projectId={project.id}
+            initialColumns={gridColumns || []}
+            initialCells={gridCells || []}
+            canManage={canManage}
+          />
+        </ProjectLiveProvider>
       </main>
     </div>
   )
