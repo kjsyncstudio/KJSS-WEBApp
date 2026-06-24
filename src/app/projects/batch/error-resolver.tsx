@@ -149,6 +149,19 @@ export function ErrorResolver({ errorRows, clients: initialClients, validStatuse
     }
   }
 
+  function handleSkip() {
+    const nextIndex = index + 1
+    if (nextIndex >= errorRows.length) {
+      const newClientsList = clients.filter(c => !initialClients.find(ic => ic.id === c.id))
+      onResolved(resolved, newClientsList)
+    } else {
+      setIndex(nextIndex)
+      setSelectedClientId('')
+      setSelectedStatus('')
+      setCreatingClient(false)
+    }
+  }
+
   const progress = `${index + 1} / ${errorRows.length}`
   const autoClient = clientMemory[current.rawClientName]
   const autoStatus = statusMemory[current.rawClientName + current.title]
@@ -243,6 +256,10 @@ export function ErrorResolver({ errorRows, clients: initialClients, validStatuse
           <button type="button" onClick={onCancel}
             className="px-4 py-2 border border-border rounded-md text-sm font-medium hover:bg-muted/50 transition-colors">
             Cancel import
+          </button>
+          <button type="button" onClick={handleSkip}
+            className="px-4 py-2 border border-border rounded-md text-sm font-medium text-muted-foreground hover:bg-muted/50 transition-colors">
+            Skip
           </button>
           <button type="button" onClick={handleNext} disabled={!canProceed}
             className="flex-1 py-2 bg-primary text-primary-foreground rounded-md text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50">
