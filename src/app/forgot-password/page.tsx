@@ -2,11 +2,12 @@ import { resetPassword } from './actions'
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/theme-toggle'
 
-export default async function ForgotPasswordPage({ searchParams }: { searchParams: Promise<{ error?: string; sent?: string; msg?: string }> }) {
+export default async function ForgotPasswordPage({ searchParams }: { searchParams: Promise<{ error?: string; sent?: string; msg?: string; email?: string }> }) {
   const params = await searchParams
   const sent = params?.sent === 'true'
   const hasError = params?.error === 'true'
   const errorMsg = params?.msg
+  const savedEmail = params?.email ?? ''
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -42,6 +43,7 @@ export default async function ForgotPasswordPage({ searchParams }: { searchParam
                 required
                 className="w-full px-3 py-2 bg-background/50 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 placeholder="you@example.com"
+                defaultValue={savedEmail}
               />
             </div>
 

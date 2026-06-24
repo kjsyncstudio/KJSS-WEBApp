@@ -15,13 +15,13 @@ export async function resetPassword(formData: FormData) {
     })
 
     if (error) {
-      redirect(`/forgot-password?error=true&msg=${encodeURIComponent(error.message)}`)
+      redirect(`/forgot-password?error=true&msg=${encodeURIComponent(error.message)}&email=${encodeURIComponent(email)}`)
     }
 
     redirect('/forgot-password?sent=true')
   } catch (err) {
     if (isRedirectError(err)) throw err
     const msg = err instanceof Error ? err.message : String(err)
-    redirect(`/forgot-password?error=true&msg=${encodeURIComponent(msg)}`)
+    redirect(`/forgot-password?error=true&msg=${encodeURIComponent(msg)}&email=${encodeURIComponent(email)}`)
   }
 }
