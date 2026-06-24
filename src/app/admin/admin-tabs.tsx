@@ -5,20 +5,25 @@ import { MembersPanel } from './members-panel'
 import { ProjectSettingsPanel } from './project-settings-panel'
 import { DeletedBin } from './deleted-bin'
 import { RecentActivity } from './recent-activity'
+import { PermissionsPanel } from './permissions-panel'
 
 type Member = { id: string; email: string; full_name: string | null; role: string; created_at: string }
 type Entry = { id: string; user_email: string; action: string; entity_type: string; entity_id: string | null; entity_name: string | null; created_at: string }
 type Deleted = { id: string; title: string; deleted_at: string; clients?: { name: string } }
+type Client = { id: string; name: string }
+type Perm = { user_id: string; client_id: string; can_read: boolean; can_write: boolean }
 
-const TABS = ['Members', 'Project Settings', 'Deleted'] as const
+const TABS = ['Members', 'Permissions', 'Project Settings', 'Deleted'] as const
 type Tab = typeof TABS[number]
 
-export function AdminTabs({ members, recentLog, statuses, types, deleted }: {
+export function AdminTabs({ members, recentLog, statuses, types, deleted, clients, permissions }: {
   members: Member[]
   recentLog: Entry[]
   statuses: string[]
   types: string[]
   deleted: Deleted[]
+  clients: Client[]
+  permissions: Perm[]
 }) {
   const [tab, setTab] = useState<Tab>('Members')
 
@@ -41,6 +46,7 @@ export function AdminTabs({ members, recentLog, statuses, types, deleted }: {
           <RecentActivity entries={recentLog} />
         </div>
       )}
+      {tab === 'Permissions' && <PermissionsPanel members={members} clients={clients} permissions={permissions} />}
       {tab === 'Project Settings' && <ProjectSettingsPanel statuses={statuses} types={types} />}
       {tab === 'Deleted' && <DeletedBin projects={deleted} />}
     </div>

@@ -68,6 +68,7 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
   const [filter, setFilter] = useState<string>('All')
   const [view, setView] = useState<ViewMode>('card')
   const [selectMode, setSelectMode] = useState(false)
+  const [hideCompleted, setHideCompleted] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -80,7 +81,8 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
   const [bulkDate, setBulkDate] = useState('')
   const [bulkFeedback, setBulkFeedback] = useState<string | null>(null)
 
-  const filteredProjects = filter === 'All' ? projects : projects.filter(p => p.status === filter)
+  const byFilter = filter === 'All' ? projects : projects.filter(p => p.status === filter)
+  const filteredProjects = hideCompleted ? byFilter.filter(p => p.status !== 'Done') : byFilter
 
   function toggleSelect(id: string) {
     setSelected(prev => {
@@ -210,6 +212,12 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
             </button>
           ))}
         </div>
+        <button onClick={() => setHideCompleted(h => !h)}
+          className={`shrink-0 px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+            hideCompleted ? 'bg-primary/10 text-primary border-primary/30' : 'border-border hover:bg-muted/50'
+          }`}>
+          {hideCompleted ? 'Show completed' : 'Hide completed'}
+        </button>
         <div className="flex items-center gap-1 glass border border-border/50 rounded-lg p-1 shrink-0">
           {([['card', CardIcon], ['list', ListIcon], ['compact', CompactIcon]] as const).map(([mode, Icon]) => (
             <button key={mode} onClick={() => setView(mode)} title={mode}

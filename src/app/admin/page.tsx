@@ -33,6 +33,9 @@ export default async function AdminPage() {
     .not('deleted_at', 'is', null)
     .order('deleted_at', { ascending: false })
 
+  const { data: clients } = await supabase.from('clients').select('id, name').order('name')
+  const { data: permissions } = await supabase.from('client_permissions').select('user_id, client_id, can_read, can_write')
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors">
       <Header />
@@ -48,6 +51,8 @@ export default async function AdminPage() {
           statuses={statuses}
           types={types}
           deleted={(deleted as never) || []}
+          clients={clients || []}
+          permissions={permissions || []}
         />
       </main>
     </div>
