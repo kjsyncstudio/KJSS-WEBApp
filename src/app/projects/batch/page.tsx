@@ -27,7 +27,7 @@ export default async function BatchProjectPage() {
             ← Back to Projects
           </Link>
           <h2 className="text-3xl font-bold tracking-tight">Batch Add Projects</h2>
-          <p className="text-muted-foreground mt-1 text-sm">Add up to 20 projects at once.</p>
+          <p className="text-muted-foreground mt-1 text-sm">Add multiple projects at once.</p>
         </div>
         <BatchForm clients={clients || []} statuses={statuses} types={types} />
       </main>

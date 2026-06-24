@@ -16,8 +16,6 @@ const STATUS_COLORS: Record<string, string> = {
   Pending: 'text-zinc-400',
 }
 
-const MAX_ROWS = 20
-
 type Row = {
   id: number
   title: string
@@ -53,7 +51,6 @@ export function BatchForm({ clients: initialClients, statuses, types }: { client
   const fileRefs = useRef<Record<number, HTMLInputElement | null>>({})
 
   function addRow() {
-    if (rows.length >= MAX_ROWS) return
     const last = rows[rows.length - 1]
     setRows(r => [...r, emptyRow(Date.now(), last)])
   }
@@ -107,7 +104,7 @@ export function BatchForm({ clients: initialClients, statuses, types }: { client
 
   function handleImport(imported: { title: string; clientId: string; type: string; status: string; description: string; projectDate: string }[], newClients: Client[] = []) {
     if (newClients.length > 0) setClients(prev => [...prev, ...newClients.filter(nc => !prev.find(c => c.id === nc.id))])
-    const newRows = imported.slice(0, MAX_ROWS - rows.length).map(r => ({
+    const newRows = imported.map(r => ({
       id: Date.now() + Math.random(),
       title: r.title,
       clientId: r.clientId,
@@ -211,10 +208,9 @@ export function BatchForm({ clients: initialClients, statuses, types }: { client
       <div className="flex items-center justify-between pt-2">
         <button
           type="button" onClick={addRow}
-          disabled={rows.length >= MAX_ROWS}
-          className="text-sm text-primary hover:underline disabled:opacity-40 disabled:cursor-not-allowed"
+          className="text-sm text-primary hover:underline"
         >
-          + Add row {rows.length > 0 && `(${rows.length}/${MAX_ROWS})`}
+          + Add row {rows.length > 0 && `(${rows.length})`}
         </button>
         <div className="flex gap-3">
           <a href="/projects" className="px-4 py-2 rounded-md text-sm font-medium border border-border hover:bg-muted/50 transition-colors">
