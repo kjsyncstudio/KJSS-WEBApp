@@ -48,10 +48,9 @@ export function ProjectForm({ clients }: { clients: Client[] }) {
             <div className="flex flex-col gap-2">
               <label htmlFor="type" className="text-sm font-medium">Type *</label>
               <select required id="type" name="type" className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
-                <option value="Website">Website</option>
-                <option value="Mobile App">Mobile App</option>
-                <option value="Design">Design</option>
-                <option value="Consulting">Consulting</option>
+                <option value="Media Production">Media Production</option>
+                <option value="Event">Event</option>
+                <option value="Consultant">Consultant</option>
                 <option value="Other">Other</option>
               </select>
             </div>

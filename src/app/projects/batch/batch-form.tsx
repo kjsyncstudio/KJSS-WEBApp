@@ -5,7 +5,7 @@ import { batchAddProjects } from './actions'
 
 type Client = { id: string; name: string }
 
-const TYPES = ['Website', 'Mobile App', 'Design', 'Consulting', 'Other']
+const TYPES = ['Media Production', 'Event', 'Consultant', 'Other']
 const STATUSES = ['Pending', 'Active', 'Shelved', 'Done']
 const STATUS_COLORS: Record<string, string> = {
   Active: 'text-green-500',
