@@ -12,8 +12,48 @@ type Client = {
   logo_url: string | null
 }
 
+type ViewMode = 'card' | 'list' | 'compact'
+
+function CardIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={active ? 'text-foreground' : 'text-muted-foreground'}>
+      <rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity={active ? 1 : 0.5} />
+      <rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity={active ? 1 : 0.5} />
+      <rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity={active ? 1 : 0.5} />
+      <rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity={active ? 1 : 0.5} />
+    </svg>
+  )
+}
+function ListIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={active ? 'text-foreground' : 'text-muted-foreground'}>
+      <rect x="1" y="2" width="14" height="3" rx="1" fill="currentColor" opacity={active ? 1 : 0.5} />
+      <rect x="1" y="7" width="14" height="3" rx="1" fill="currentColor" opacity={active ? 1 : 0.5} />
+      <rect x="1" y="12" width="14" height="2" rx="1" fill="currentColor" opacity={active ? 1 : 0.5} />
+    </svg>
+  )
+}
+function CompactIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={active ? 'text-foreground' : 'text-muted-foreground'}>
+      <rect x="1" y="2" width="14" height="1.5" rx="0.75" fill="currentColor" opacity={active ? 1 : 0.5} />
+      <rect x="1" y="5.5" width="14" height="1.5" rx="0.75" fill="currentColor" opacity={active ? 1 : 0.5} />
+      <rect x="1" y="9" width="14" height="1.5" rx="0.75" fill="currentColor" opacity={active ? 1 : 0.5} />
+      <rect x="1" y="12.5" width="14" height="1.5" rx="0.75" fill="currentColor" opacity={active ? 1 : 0.5} />
+    </svg>
+  )
+}
+
 export function ClientList({ clients, canManage }: { clients: Client[], canManage: boolean }) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [view, setView] = useState<ViewMode>('card')
+
+  // Persist view choice
+  useEffect(() => {
+    const saved = localStorage.getItem('clientView') as ViewMode | null
+    if (saved === 'card' || saved === 'list' || saved === 'compact') setView(saved)
+  }, [])
+  function changeView(v: ViewMode) { setView(v); localStorage.setItem('clientView', v) }
   
   // Context Menu State
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, clientId: string } | null>(null)
@@ -61,38 +101,50 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
     )
   }
 
+  const Avatar = ({ client, size }: { client: Client; size: string }) =>
+    client.logo_url
+      ? <img src={client.logo_url} alt={client.name} className={`${size} rounded-full object-cover bg-secondary shrink-0`} />
+      : <div className={`${size} rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-primary font-bold shrink-0`}>{client.name.charAt(0)}</div>
+
   return (
     <>
+      {/* View toggle */}
+      <div className="flex justify-end mb-6">
+        <div className="flex gap-1 bg-secondary/40 rounded-lg p-1">
+          {([['card', CardIcon], ['list', ListIcon], ['compact', CompactIcon]] as const).map(([mode, Icon]) => (
+            <button key={mode} onClick={() => changeView(mode)} title={mode}
+              className={`px-2.5 py-1.5 rounded-md transition-colors ${view === mode ? 'bg-background shadow-sm' : 'hover:bg-background/50'}`}>
+              <Icon active={view === mode} />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {view === 'card' && (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {clients.map((client) => (
-          <div 
-            key={client.id} 
+          <div
+            key={client.id}
             onContextMenu={(e) => handleContextMenu(e, client.id)}
             className="glass p-6 rounded-2xl border-border/50 flex flex-col group relative overflow-hidden transition-all hover:shadow-xl hover:border-primary/20 cursor-context-menu"
           >
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-3">
-                {client.logo_url ? (
-                  <img src={client.logo_url} alt={client.name} className="w-12 h-12 rounded-full object-cover bg-secondary" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-primary font-bold text-lg">
-                    {client.name.charAt(0)}
-                  </div>
-                )}
+                <Avatar client={client} size="w-12 h-12 text-lg" />
                 <div>
                   <h3 className="font-semibold text-lg leading-tight">{client.name}</h3>
                   <span className="text-sm text-muted-foreground">{client.industry}</span>
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-auto pt-4 border-t border-border/50 flex items-center justify-between">
               <span className="text-xs font-medium bg-secondary/50 px-2 py-1 rounded-md text-muted-foreground">
                 {client.year_start} - {client.year_end || 'Present'}
               </span>
-              
+
               {canManage && (
-                <button 
+                <button
                   onClick={(e) => { e.stopPropagation(); handleDelete(client.id) }}
                   disabled={deletingId === client.id}
                   className="text-xs text-destructive hover:underline opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
@@ -104,6 +156,65 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
           </div>
         ))}
       </div>
+      )}
+
+      {view === 'list' && (
+        <div className="glass rounded-2xl border border-border/50 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="border-b border-border/50 bg-muted/20">
+              <tr>
+                <th className="text-left px-5 py-3 font-medium text-muted-foreground">Client</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Industry</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Years</th>
+                <th className="px-4 py-3 w-16" />
+              </tr>
+            </thead>
+            <tbody>
+              {clients.map((client, i) => (
+                <tr key={client.id} onContextMenu={(e) => handleContextMenu(e, client.id)}
+                  className={`border-b border-border/30 last:border-0 group cursor-context-menu ${i % 2 === 0 ? '' : 'bg-muted/5'}`}>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar client={client} size="w-8 h-8 text-sm" />
+                      <span className="font-medium">{client.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{client.industry}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{client.year_start} - {client.year_end || 'Present'}</td>
+                  <td className="px-4 py-3 text-right">
+                    {canManage && (
+                      <button onClick={() => handleDelete(client.id)} disabled={deletingId === client.id}
+                        className="text-xs text-destructive hover:underline opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50">
+                        Delete
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {view === 'compact' && (
+        <div className="glass rounded-2xl border border-border/50 divide-y divide-border/30">
+          {clients.map((client) => (
+            <div key={client.id} onContextMenu={(e) => handleContextMenu(e, client.id)}
+              className="flex items-center gap-3 px-4 py-2 group hover:bg-muted/10 transition-colors cursor-context-menu">
+              <Avatar client={client} size="w-6 h-6 text-xs" />
+              <span className="font-medium truncate flex-1">{client.name}</span>
+              <span className="text-xs text-muted-foreground hidden sm:block truncate max-w-[10rem]">{client.industry}</span>
+              <span className="text-xs text-muted-foreground hidden md:block">{client.year_start} - {client.year_end || 'Present'}</span>
+              {canManage && (
+                <button onClick={() => handleDelete(client.id)} disabled={deletingId === client.id}
+                  className="text-xs text-destructive hover:underline opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 ml-1">
+                  Delete
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Context Menu */}
       {contextMenu && (
