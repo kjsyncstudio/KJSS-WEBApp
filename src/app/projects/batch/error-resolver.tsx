@@ -26,17 +26,16 @@ interface ErrorResolverProps {
   errorRows: ErrorRow[]
   clients: Client[]
   validStatuses?: string[]
-  onResolved: (rows: ResolvedRow[], newClients: Client[]) => void
-  onCancel: () => void
+  onRow: (row: ResolvedRow, newClients: Client[]) => void  // emit each resolved entry live
+  onClose: () => void
 }
 
 type ClientResolution = { clientId: string; clientName: string }
 
-export function ErrorResolver({ errorRows, clients: initialClients, validStatuses, onResolved, onCancel }: ErrorResolverProps) {
+export function ErrorResolver({ errorRows, clients: initialClients, validStatuses, onRow, onClose }: ErrorResolverProps) {
   const VALID_STATUSES = validStatuses?.length ? validStatuses : DEFAULT_STATUSES
   const [index, setIndex] = useState(0)
   const [clients, setClients] = useState<Client[]>(initialClients)
-  const [resolved, setResolved] = useState<ResolvedRow[]>([])
   // memory: raw client name → resolution
   const [clientMemory, setClientMemory] = useState<Record<string, ClientResolution>>({})
   const [statusMemory, setStatusMemory] = useState<Record<string, string>>({})
@@ -82,6 +81,18 @@ export function ErrorResolver({ errorRows, clients: initialClients, validStatuse
     setNewClientIndustry('')
   }
 
+  const newClients = () => clients.filter(c => !initialClients.find(ic => ic.id === c.id))
+
+  function advance(nextIndex: number) {
+    if (nextIndex >= errorRows.length) onClose()
+    else {
+      setIndex(nextIndex)
+      setSelectedClientId('')
+      setSelectedStatus('')
+      setCreatingClient(false)
+    }
+  }
+
   function handleNext() {
     const newMemoryClient = selectedClientId
       ? { ...clientMemory, [current.rawClientName]: { clientId: selectedClientId, clientName: clients.find(c => c.id === selectedClientId)?.name ?? '' } }
@@ -93,73 +104,39 @@ export function ErrorResolver({ errorRows, clients: initialClients, validStatuse
     setClientMemory(newMemoryClient)
     setStatusMemory(newMemoryStatus)
 
-    const row: ResolvedRow = {
+    // emit current resolved entry live (pops up behind the modal)
+    onRow({
       title: current.title,
       clientId: effectiveClientId,
       type: VALID_TYPES.includes(current.type) ? current.type : 'Other',
       status: effectiveStatus,
       description: current.description,
       projectDate: current.projectDate,
-    }
+    }, newClients())
 
-    const nextResolved = [...resolved, row]
-
-    // Check if next rows can be auto-resolved using updated memory
+    // auto-resolve & emit subsequent rows that now match from memory
     let nextIndex = index + 1
-    const autoResolved: ResolvedRow[] = []
-
     while (nextIndex < errorRows.length) {
       const next = errorRows[nextIndex]
       const autoClient = newMemoryClient[next.rawClientName]?.clientId || next.clientId
       const autoStatus = newMemoryStatus[next.rawClientName + next.title] || next.status
       const autoType = VALID_TYPES.includes(next.type) ? next.type : null
-
-      const clientOk = !!autoClient && !!clients.find(c => c.id === autoClient) || !![...clients, ...autoResolved.map((_, i) => ({ id: '', name: '' }))].find(c => c.id === autoClient)
-      const statusOk = VALID_STATUSES.includes(autoStatus)
-      const typeOk = !!autoType
-
-      // re-check with updated clients list
-      const clientFound = [...clients, ...(nextIndex > 0 ? [] : [])].find(c => c.id === autoClient)
-
-      if (clientFound && statusOk && typeOk) {
-        autoResolved.push({
-          title: next.title,
-          clientId: autoClient,
-          type: autoType!,
-          status: autoStatus,
-          description: next.description,
-          projectDate: next.projectDate,
-        })
+      const clientFound = clients.find(c => c.id === autoClient)
+      if (clientFound && VALID_STATUSES.includes(autoStatus) && autoType) {
+        onRow({ title: next.title, clientId: autoClient, type: autoType, status: autoStatus, description: next.description, projectDate: next.projectDate }, newClients())
         nextIndex++
-      } else {
-        break
-      }
+      } else break
     }
 
-    if (nextIndex >= errorRows.length) {
-      // all done
-      const newClientsList = clients.filter(c => !initialClients.find(ic => ic.id === c.id))
-      onResolved([...nextResolved, ...autoResolved], newClientsList)
-    } else {
-      setResolved([...nextResolved, ...autoResolved])
-      setIndex(nextIndex)
-      setSelectedClientId('')
-      setSelectedStatus('')
-      setCreatingClient(false)
-    }
+    advance(nextIndex)
   }
 
   function handleSkip() {
-    const nextIndex = index + 1
-    if (nextIndex >= errorRows.length) {
-      const newClientsList = clients.filter(c => !initialClients.find(ic => ic.id === c.id))
-      onResolved(resolved, newClientsList)
-    } else {
-      setIndex(nextIndex)
-      setSelectedClientId('')
-      setSelectedStatus('')
-      setCreatingClient(false)
-    }
+    advance(index + 1)
+  }
+
+  function handleSkipRest() {
+    onClose()
   }
 
   const progress = `${index + 1} / ${errorRows.length}`
@@ -252,18 +229,22 @@ export function ErrorResolver({ errorRows, clients: initialClients, validStatuse
           </div>
         )}
 
-        <div className="flex gap-3 pt-2">
-          <button type="button" onClick={onCancel}
-            className="px-4 py-2 border border-border rounded-md text-sm font-medium hover:bg-muted/50 transition-colors">
-            Cancel import
+        <div className="flex flex-wrap gap-2 pt-2">
+          <button type="button" onClick={onClose}
+            className="px-3 py-2 border border-border rounded-md text-sm font-medium hover:bg-muted/50 transition-colors">
+            Close
           </button>
           <button type="button" onClick={handleSkip}
-            className="px-4 py-2 border border-border rounded-md text-sm font-medium text-muted-foreground hover:bg-muted/50 transition-colors">
+            className="px-3 py-2 border border-border rounded-md text-sm font-medium text-muted-foreground hover:bg-muted/50 transition-colors">
             Skip
+          </button>
+          <button type="button" onClick={handleSkipRest}
+            className="px-3 py-2 border border-border rounded-md text-sm font-medium text-muted-foreground hover:bg-muted/50 transition-colors">
+            Skip rest
           </button>
           <button type="button" onClick={handleNext} disabled={!canProceed}
             className="flex-1 py-2 bg-primary text-primary-foreground rounded-md text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50">
-            {index + 1 < errorRows.length ? 'Next →' : 'Finish & import'}
+            {index + 1 < errorRows.length ? 'Add & next →' : 'Add & finish'}
           </button>
         </div>
       </div>

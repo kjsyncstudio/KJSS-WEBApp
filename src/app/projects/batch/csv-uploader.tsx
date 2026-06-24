@@ -73,7 +73,6 @@ interface CsvUploaderProps {
 
 export function CsvUploader({ clients: initialClients, validTypes, validStatuses, onImport }: CsvUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null)
-  const [validRows, setValidRows] = useState<ResolvedRow[]>([])
   const [errorRows, setErrorRows] = useState<ErrorRow[]>([])
   const [clients, setClients] = useState<Client[]>(initialClients)
   const [parseError, setParseError] = useState<string | null>(null)
@@ -82,31 +81,20 @@ export function CsvUploader({ clients: initialClients, validTypes, validStatuses
 
   async function handleFile(file: File) {
     setParseError(null)
-    setValidRows([]); setErrorRows([])
+    setErrorRows([])
     setFileName(file.name)
     const text = await file.text()
     try {
       const rows = file.name.endsWith('.json') ? parseJSON(text, clients, validTypes, validStatuses) : parseCSV(text, clients, validTypes, validStatuses)
       const valid = rows.filter(r => r.errors.length === 0).map(({ errors: _, rawClientName: __, ...r }) => r)
       const errs = rows.filter(r => r.errors.length > 0) as ErrorRow[]
-      setValidRows(valid)
       setErrorRows(errs)
+      // valid rows go straight into the batch form right away
+      if (valid.length > 0) onImport(valid, [])
       if (errs.length > 0) setResolving(true)
-      else if (valid.length > 0) handleFinish(valid, [], [])
     } catch (e) {
       setParseError(e instanceof Error ? e.message : 'Parse error')
     }
-  }
-
-  function handleFinish(valid: ResolvedRow[], fromResolver: ResolvedRow[], newClients: Client[]) {
-    const all = [...valid, ...fromResolver]
-    const merged = [...clients, ...newClients]
-    setClients(merged)
-    setResolving(false)
-    setErrorRows([])
-    setValidRows([])
-    setFileName('')
-    onImport(all, newClients)
   }
 
   return (
@@ -116,8 +104,8 @@ export function CsvUploader({ clients: initialClients, validTypes, validStatuses
           errorRows={errorRows}
           clients={clients}
           validStatuses={validStatuses}
-          onResolved={(fromResolver, newClients) => handleFinish(validRows, fromResolver, newClients)}
-          onCancel={() => { setResolving(false); setErrorRows([]); setValidRows([]) }}
+          onRow={(row, newClients) => { if (newClients.length) setClients(prev => [...prev, ...newClients.filter(nc => !prev.find(c => c.id === nc.id))]); onImport([row], newClients) }}
+          onClose={() => { setResolving(false); setErrorRows([] ) }}
         />
       )}
 
