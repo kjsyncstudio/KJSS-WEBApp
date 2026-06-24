@@ -20,7 +20,7 @@ export async function addProject(formData: FormData) {
     client_id: clientId,
     status,
     description,
-    project_date: projectDate || null,
+    project_date: /^\d{4}-\d{2}-\d{2}$/.test(projectDate || '') ? projectDate : null,
   }).select().single()
 
   if (error) {
