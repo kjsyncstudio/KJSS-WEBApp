@@ -26,10 +26,17 @@ export default async function ClientsPage() {
   const canManage = role === 'admin'
 
   // Fetch clients
-  const { data: clients } = await supabase
-    .from('clients')
-    .select('*')
-    .order('created_at', { ascending: false })
+  let query = supabase.from('clients').select('*').order('created_at', { ascending: false })
+
+  // Non-admins only see clients they have read permission on
+  if (!canManage) {
+    const { data: perms } = await supabase.from('client_permissions').select('client_id').eq('user_id', user.id).eq('can_read', true)
+    const allowed = (perms || []).map(p => p.client_id)
+    if (allowed.length === 0) { query = query.eq('id', '00000000-0000-0000-0000-000000000000') }
+    else { query = query.in('id', allowed) }
+  }
+
+  const { data: clients } = await query
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors">

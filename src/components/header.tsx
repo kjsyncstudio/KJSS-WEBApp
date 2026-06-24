@@ -20,7 +20,7 @@ export default async function Header() {
   }
 
   return (
-    <header className="border-b border-border bg-card/50 glass sticky top-0 z-50">
+    <header className="border-b border-border bg-background sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity">

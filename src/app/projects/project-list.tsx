@@ -11,6 +11,8 @@ type Project = {
   type: string
   client_id: string
   description: string | null
+  project_date?: string | null
+  created_at?: string
   clients?: { name: string }
 }
 
@@ -76,6 +78,19 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
   const changeView = (v: ViewMode) => { setView(v); localStorage.setItem('projectView', v) }
   const [selectMode, setSelectMode] = useState(false)
   const [hideCompleted, setHideCompleted] = useState(false)
+  const [clientFilter, setClientFilter] = useState<string>('all')
+  const [sortKey, setSortKey] = useState<'date' | 'name'>('date')
+  const [sortAsc, setSortAsc] = useState(false) // default: latest first
+  function flipSort(key: 'date' | 'name') {
+    if (key === sortKey) setSortAsc(a => !a)
+    else { setSortKey(key); setSortAsc(key === 'name') }
+  }
+  // treat Done / Completed (any casing) as "completed"
+  const isCompleted = (s: string) => /^(done|complete)/i.test(s)
+  // contractor client filter buttons: distinct clients present in their visible projects
+  const clientButtons = !isAdmin
+    ? Array.from(new Map(projects.map(p => [p.client_id, p.clients?.name ?? '—'])).entries())
+    : []
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -88,8 +103,19 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
   const [bulkDate, setBulkDate] = useState('')
   const [bulkFeedback, setBulkFeedback] = useState<string | null>(null)
 
-  const byFilter = filter === 'All' ? projects : projects.filter(p => p.status === filter)
-  const filteredProjects = hideCompleted ? byFilter.filter(p => p.status !== 'Done') : byFilter
+  let working = filter === 'All' ? projects : projects.filter(p => p.status === filter)
+  if (hideCompleted) working = working.filter(p => !isCompleted(p.status))
+  if (clientFilter !== 'all') working = working.filter(p => p.client_id === clientFilter)
+  const filteredProjects = [...working].sort((a, b) => {
+    let r = 0
+    if (sortKey === 'name') r = a.title.localeCompare(b.title)
+    else {
+      const da = a.project_date || a.created_at || ''
+      const db = b.project_date || b.created_at || ''
+      r = da.localeCompare(db)
+    }
+    return sortAsc ? r : -r
+  })
 
   function toggleSelect(id: string) {
     setSelected(prev => {
@@ -197,6 +223,26 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
         </div>
       )}
 
+      {/* Contractor client filter — single select */}
+      {clientButtons.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 mb-4">
+          <button onClick={() => setClientFilter('all')}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+              clientFilter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'
+            }`}>
+            All clients
+          </button>
+          {clientButtons.map(([id, name]) => (
+            <button key={id} onClick={() => setClientFilter(id)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                clientFilter === id ? 'bg-primary text-primary-foreground' : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'
+              }`}>
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Filters + view toggle */}
       <div className="flex items-center justify-between mb-6 gap-4">
         {canManage && (
@@ -219,6 +265,14 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
             </button>
           ))}
         </div>
+        {([['date', 'Date'], ['name', 'Name']] as const).map(([key, label]) => (
+          <button key={key} onClick={() => flipSort(key)} title="Click to sort · click again to flip"
+            className={`shrink-0 px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+              sortKey === key ? 'bg-primary/10 text-primary border-primary/30' : 'border-border hover:bg-muted/50'
+            }`}>
+            {label}{sortKey === key && (sortAsc ? ' ↑' : ' ↓')}
+          </button>
+        ))}
         <button onClick={() => setHideCompleted(h => !h)}
           className={`shrink-0 px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
             hideCompleted ? 'bg-primary/10 text-primary border-primary/30' : 'border-border hover:bg-muted/50'
