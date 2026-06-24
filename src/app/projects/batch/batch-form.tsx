@@ -44,7 +44,8 @@ function emptyRow(id: number, base?: Row): Row {
   }
 }
 
-export function BatchForm({ clients }: { clients: Client[] }) {
+export function BatchForm({ clients: initialClients }: { clients: Client[] }) {
+  const [clients, setClients] = useState<Client[]>(initialClients)
   const [rows, setRows] = useState<Row[]>([emptyRow(0)])
   const [submitting, setSubmitting] = useState(false)
   const fileRefs = useRef<Record<number, HTMLInputElement | null>>({})
@@ -102,7 +103,8 @@ export function BatchForm({ clients }: { clients: Client[] }) {
     setSubmitting(false)
   }
 
-  function handleImport(imported: { title: string; clientId: string; type: string; status: string; description: string; projectDate: string }[]) {
+  function handleImport(imported: { title: string; clientId: string; type: string; status: string; description: string; projectDate: string }[], newClients: Client[] = []) {
+    if (newClients.length > 0) setClients(prev => [...prev, ...newClients.filter(nc => !prev.find(c => c.id === nc.id))])
     const newRows = imported.slice(0, MAX_ROWS - rows.length).map(r => ({
       id: Date.now() + Math.random(),
       title: r.title,
@@ -119,7 +121,7 @@ export function BatchForm({ clients }: { clients: Client[] }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <CsvUploader clients={clients} onImport={handleImport} />
+      <CsvUploader clients={clients} onImport={(rows, newClients) => handleImport(rows, newClients)} />
       {rows.map((row, i) => (
         <div
           key={row.id}
