@@ -108,7 +108,7 @@ export function BatchForm({ clients }: { clients: Client[] }) {
           />
 
           {/* Title + meta */}
-          <div className="flex flex-col gap-1.5 w-52 shrink-0 justify-center">
+          <div className="flex flex-col gap-1.5 flex-1 min-w-0 justify-center">
             <input
               placeholder="Project title *"
               required
