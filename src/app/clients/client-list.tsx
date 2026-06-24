@@ -47,6 +47,24 @@ function CompactIcon({ active }: { active: boolean }) {
 export function ClientList({ clients, canManage }: { clients: Client[], canManage: boolean }) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [view, setView] = useState<ViewMode>('card')
+  const [sortKey, setSortKey] = useState<'name' | 'industry' | 'years'>('name')
+  const [sortAsc, setSortAsc] = useState(true)
+
+  function selectSort(key: 'name' | 'industry' | 'years') {
+    if (key !== sortKey) { setSortKey(key); setSortAsc(true) }
+  }
+  function flipSort(key: 'name' | 'industry' | 'years') {
+    if (key === sortKey) setSortAsc(a => !a)
+    else { setSortKey(key); setSortAsc(true) }
+  }
+
+  const sorted = [...clients].sort((a, b) => {
+    let r = 0
+    if (sortKey === 'name') r = a.name.localeCompare(b.name)
+    else if (sortKey === 'industry') r = a.industry.localeCompare(b.industry)
+    else r = a.year_start - b.year_start
+    return sortAsc ? r : -r
+  })
 
   // Persist view choice
   useEffect(() => {
@@ -108,8 +126,20 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
 
   return (
     <>
-      {/* View toggle */}
-      <div className="flex justify-end mb-6">
+      {/* Sort + view toggle */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Sort:</span>
+          {([['name', 'Name'], ['industry', 'Industry'], ['years', 'Years']] as const).map(([key, label]) => (
+            <button key={key} onClick={() => selectSort(key)} onDoubleClick={() => flipSort(key)}
+              title="Click to sort · double-click to flip direction"
+              className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+                sortKey === key ? 'bg-primary/10 text-primary border-primary/30' : 'border-border hover:bg-muted/50'
+              }`}>
+              {label}{sortKey === key && (sortAsc ? ' ↑' : ' ↓')}
+            </button>
+          ))}
+        </div>
         <div className="flex gap-1 bg-secondary/40 rounded-lg p-1">
           {([['card', CardIcon], ['list', ListIcon], ['compact', CompactIcon]] as const).map(([mode, Icon]) => (
             <button key={mode} onClick={() => changeView(mode)} title={mode}
@@ -122,7 +152,7 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
 
       {view === 'card' && (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {clients.map((client) => (
+        {sorted.map((client) => (
           <div
             key={client.id}
             onContextMenu={(e) => handleContextMenu(e, client.id)}
@@ -170,7 +200,7 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
               </tr>
             </thead>
             <tbody>
-              {clients.map((client, i) => (
+              {sorted.map((client, i) => (
                 <tr key={client.id} onContextMenu={(e) => handleContextMenu(e, client.id)}
                   className={`border-b border-border/30 last:border-0 group cursor-context-menu ${i % 2 === 0 ? '' : 'bg-muted/5'}`}>
                   <td className="px-5 py-3">
@@ -198,7 +228,7 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
 
       {view === 'compact' && (
         <div className="glass rounded-2xl border border-border/50 divide-y divide-border/30">
-          {clients.map((client) => (
+          {sorted.map((client) => (
             <div key={client.id} onContextMenu={(e) => handleContextMenu(e, client.id)}
               className="flex items-center gap-3 px-4 py-2 group hover:bg-muted/10 transition-colors cursor-context-menu">
               <Avatar client={client} size="w-6 h-6 text-xs" />
