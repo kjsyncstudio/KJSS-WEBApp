@@ -45,7 +45,36 @@ export function ExcelGrid({
 
   const live = useProjectLive()
 
-  // Live: apply remote cell + column changes (skip the cell you're editing)
+  // Instant: apply broadcast keystrokes from others
+  useEffect(() => {
+    if (!live) return
+    const offCell = live.onBroadcast('cell', p => {
+      const r = p.r as number, c = p.c as number
+      if (editingKey === `${r}-${c}`) return
+      setRowCount(prev => Math.max(prev, r + 1))
+      setCells(prev => {
+        const i = prev.findIndex(x => x.row_index === r && x.col_index === c)
+        const next = [...prev]
+        const val = (p.value as string) ?? ''
+        if (i >= 0) next[i] = { row_index: r, col_index: c, value: val }
+        else next.push({ row_index: r, col_index: c, value: val })
+        return next
+      })
+    })
+    const offCol = live.onBroadcast('col', p => {
+      const c = p.c as number
+      setColumns(prev => {
+        const i = prev.findIndex(x => x.col_index === c)
+        const next = [...prev]
+        if (i >= 0) next[i] = { col_index: c, header: (p.header as string) ?? '' }
+        else next.push({ col_index: c, header: (p.header as string) ?? '' })
+        return next
+      })
+    })
+    return () => { offCell(); offCol() }
+  }, [live, editingKey])
+
+  // Durable: apply persisted remote cell + column changes (skip the cell you're editing)
   useEffect(() => {
     if (!live) return
     const offCell = live.onRemote('project_grid_cells', row => {
@@ -104,6 +133,7 @@ export function ExcelGrid({
       newCells.push({ row_index: rowIndex, col_index: colIndex, value })
     }
     setCells(newCells)
+    live?.broadcast('cell', { r: rowIndex, c: colIndex, value })
 
     if (!canManage) return
 
@@ -120,6 +150,7 @@ export function ExcelGrid({
     if (idx >= 0) {
       newCols[idx] = { ...newCols[idx], header }
       setColumns(newCols)
+      live?.broadcast('col', { c: colIndex, header })
       if (canManage) {
         await updateGridColumn(projectId, colIndex, header)
       }

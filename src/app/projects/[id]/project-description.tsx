@@ -28,7 +28,16 @@ export function ProjectDescription({
     }
   }, [editing])
 
-  // Live: apply remote description changes when not editing
+  // Instant: apply broadcast keystrokes
+  useEffect(() => {
+    if (!live) return
+    return live.onBroadcast('description', p => {
+      if (editing) return
+      setValue((p.value as string) ?? '')
+    })
+  }, [live, editing])
+
+  // Durable: apply persisted remote description changes
   useEffect(() => {
     if (!live) return
     return live.onRemote('projects', row => {
@@ -55,7 +64,7 @@ export function ProjectDescription({
         <textarea
           ref={taRef}
           value={value}
-          onChange={e => setValue(e.target.value)}
+          onChange={e => { setValue(e.target.value); live?.broadcast('description', { value: e.target.value }) }}
           onBlur={handleBlur}
           rows={4}
           className="w-full bg-transparent text-muted-foreground whitespace-pre-wrap resize-y focus:outline-none focus:ring-1 focus:ring-primary/50 rounded-md p-2 -m-2"

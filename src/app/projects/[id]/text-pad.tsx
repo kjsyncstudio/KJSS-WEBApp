@@ -13,7 +13,16 @@ export function TextPad({ projectId, initialContent, canManage }: { projectId: s
   const live = useProjectLive()
   const lockedBy = live?.lockedByOther('notes') ?? null
 
-  // Live: apply remote note changes when not actively editing here
+  // Instant: apply broadcast keystrokes from others
+  useEffect(() => {
+    if (!live) return
+    return live.onBroadcast('notes', p => {
+      if (editing.current) return
+      setContent((p.content as string) ?? '')
+    })
+  }, [live])
+
+  // Durable: apply persisted remote note changes (late joiners / after refresh)
   useEffect(() => {
     if (!live) return
     return live.onRemote('project_text_notes', row => {
@@ -49,7 +58,7 @@ export function TextPad({ projectId, initialContent, canManage }: { projectId: s
         className="w-full bg-transparent p-4 min-h-[150px] resize-y focus:outline-none focus:bg-secondary/10 transition-colors text-sm disabled:opacity-60"
         placeholder="Start typing your notes here..."
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={(e) => { setContent(e.target.value); live?.broadcast('notes', { content: e.target.value }) }}
         onFocus={() => { editing.current = true; live?.lock('notes') }}
         onBlur={() => { editing.current = false; live?.unlock('notes') }}
         disabled={!canManage || !!lockedBy}

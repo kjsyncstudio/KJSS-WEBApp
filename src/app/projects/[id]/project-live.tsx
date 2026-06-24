@@ -6,6 +6,8 @@ import { createClient } from '@/utils/supabase/client'
 
 type RemoteHandler = (row: Record<string, unknown>) => void
 
+type BroadcastHandler = (payload: Record<string, unknown>) => void
+
 type LiveCtx = {
   me: string
   locks: Record<string, string>        // field -> email of whoever holds it
@@ -13,6 +15,8 @@ type LiveCtx = {
   unlock: (field: string) => void
   lockedByOther: (field: string) => string | null
   onRemote: (table: string, cb: RemoteHandler) => () => void
+  broadcast: (event: string, payload: Record<string, unknown>) => void   // instant keystroke sync
+  onBroadcast: (event: string, cb: BroadcastHandler) => () => void
 }
 
 const Ctx = createContext<LiveCtx | null>(null)
@@ -23,12 +27,15 @@ const TABLES = ['projects', 'project_text_notes', 'project_grid_cells', 'project
 export function ProjectLiveProvider({ projectId, userEmail, children }: { projectId: string; userEmail: string; children: ReactNode }) {
   const [locks, setLocks] = useState<Record<string, string>>({})
   const handlers = useRef<Record<string, Set<RemoteHandler>>>({})
+  const bHandlers = useRef<Record<string, Set<BroadcastHandler>>>({})
   const channelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null)
   const myField = useRef<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
-    const channel = supabase.channel(`proj-${projectId}`, { config: { presence: { key: userEmail } } })
+    const channel = supabase.channel(`proj-${projectId}`, {
+      config: { presence: { key: userEmail }, broadcast: { self: false } },
+    })
 
     channel.on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState() as Record<string, { field?: string | null; email?: string }[]>
@@ -44,6 +51,12 @@ export function ProjectLiveProvider({ projectId, userEmail, children }: { projec
         handlers.current[table]?.forEach(cb => cb(row))
       })
     }
+
+    // Instant keystroke sync (no DB round-trip)
+    channel.on('broadcast', { event: 'edit' }, ({ payload }) => {
+      const { event, ...rest } = (payload ?? {}) as { event?: string } & Record<string, unknown>
+      if (event) bHandlers.current[event]?.forEach(cb => cb(rest))
+    })
 
     channel.subscribe(status => { if (status === 'SUBSCRIBED') channel.track({ field: null, email: userEmail }) })
     channelRef.current = channel
@@ -70,8 +83,17 @@ export function ProjectLiveProvider({ projectId, userEmail, children }: { projec
     return () => { handlers.current[table]?.delete(cb) }
   }, [])
 
+  const broadcast = useCallback((event: string, payload: Record<string, unknown>) => {
+    channelRef.current?.send({ type: 'broadcast', event: 'edit', payload: { event, ...payload } })
+  }, [])
+
+  const onBroadcast = useCallback((event: string, cb: BroadcastHandler) => {
+    (bHandlers.current[event] ??= new Set()).add(cb)
+    return () => { bHandlers.current[event]?.delete(cb) }
+  }, [])
+
   return (
-    <Ctx.Provider value={{ me: userEmail, locks, lock, unlock, lockedByOther, onRemote }}>
+    <Ctx.Provider value={{ me: userEmail, locks, lock, unlock, lockedByOther, onRemote, broadcast, onBroadcast }}>
       {children}
     </Ctx.Provider>
   )
