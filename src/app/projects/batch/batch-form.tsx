@@ -97,6 +97,7 @@ export function BatchForm({ clients: initialClients, statuses, types }: { client
   const [clients, setClients] = useState<Client[]>(initialClients)
   const [rows, setRows] = useState<Row[]>([emptyRow(0)])
   const [submitting, setSubmitting] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const fileRefs = useRef<Record<number, HTMLInputElement | null>>({})
 
   function addRow() {
@@ -135,6 +136,7 @@ export function BatchForm({ clients: initialClients, statuses, types }: { client
     e.preventDefault()
     const form = e.currentTarget
     setSubmitting(true)
+    setSaveError('')
 
     // Upload all thumbnail files first
     const supabase = createClient()
@@ -161,7 +163,9 @@ export function BatchForm({ clients: initialClients, statuses, types }: { client
       fd.set(`projectDate_${i}`, row.projectDate)
       fd.set(`thumbnailUrl_${i}`, thumbnailUrls[i] ?? '')
     })
-    await batchAddProjects(fd)
+    // On success batchAddProjects redirects (throws), so this only returns on error
+    const res = await batchAddProjects(fd)
+    if (res?.error) setSaveError(res.error)
     setSubmitting(false)
   }
 
@@ -294,6 +298,14 @@ export function BatchForm({ clients: initialClients, statuses, types }: { client
           </button>
         </div>
       </div>
+
+      {saveError && (
+        <p className="text-sm text-red-500 text-right">
+          {saveError === 'No valid rows.'
+            ? 'No valid rows — every project needs a title, client, type and status. Pick a client (use Clean Up to auto-fill).'
+            : saveError}
+        </p>
+      )}
 
       <style>{`
         @keyframes slideDown {
