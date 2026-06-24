@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { batchAddProjects } from './actions'
+import { createClient } from '@/utils/supabase/client'
 
 type Client = { id: string; name: string }
 
@@ -24,7 +25,8 @@ type Row = {
   status: string
   description: string
   projectDate: string
-  thumbnail: string | null
+  thumbnail: string | null   // local object URL for preview
+  thumbnailFile: File | null // actual file to upload
 }
 
 function emptyRow(id: number, base?: Row): Row {
@@ -36,7 +38,8 @@ function emptyRow(id: number, base?: Row): Row {
     status: base?.status ?? 'Pending',
     description: base?.description ?? '',
     projectDate: base?.projectDate ?? '',
-    thumbnail: base?.thumbnail ?? null,
+    thumbnail: null,
+    thumbnailFile: null,
   }
 }
 
@@ -62,12 +65,27 @@ export function BatchForm({ clients }: { clients: Client[] }) {
   function handleThumb(id: number, file: File | null) {
     if (!file) return
     const url = URL.createObjectURL(file)
-    setRows(r => r.map(row => row.id === id ? { ...row, thumbnail: url } : row))
+    setRows(r => r.map(row => row.id === id ? { ...row, thumbnail: url, thumbnailFile: file } : row))
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitting(true)
+
+    // Upload all thumbnail files first
+    const supabase = createClient()
+    const thumbnailUrls: Record<number, string> = {}
+    await Promise.all(rows.map(async (row, i) => {
+      if (!row.thumbnailFile) return
+      const ext = row.thumbnailFile.name.split('.').pop()
+      const path = `project-thumbnails/${Date.now()}_${i}.${ext}`
+      const { error } = await supabase.storage.from('images').upload(path, row.thumbnailFile, { upsert: true })
+      if (!error) {
+        const { data } = supabase.storage.from('images').getPublicUrl(path)
+        thumbnailUrls[i] = data.publicUrl
+      }
+    }))
+
     const fd = new FormData(e.currentTarget)
     fd.set('count', String(rows.length))
     rows.forEach((row, i) => {
@@ -77,6 +95,7 @@ export function BatchForm({ clients }: { clients: Client[] }) {
       fd.set(`status_${i}`, row.status)
       fd.set(`description_${i}`, row.description)
       fd.set(`projectDate_${i}`, row.projectDate)
+      fd.set(`thumbnailUrl_${i}`, thumbnailUrls[i] ?? '')
     })
     await batchAddProjects(fd)
     setSubmitting(false)

@@ -2,21 +2,25 @@
 
 import { useState } from 'react'
 import { addClient } from './actions'
+import { ImageUploader } from '@/components/image-uploader'
 
 export function ClientForm() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [logoUrl, setLogoUrl] = useState<string>('')
 
   async function onSubmit(formData: FormData) {
     setLoading(true)
+    formData.set('logoUrl', logoUrl)
     await addClient(formData)
     setLoading(false)
     setIsOpen(false)
+    setLogoUrl('')
   }
 
   if (!isOpen) {
     return (
-      <button 
+      <button
         onClick={() => setIsOpen(true)}
         className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium text-sm hover:bg-primary/90 transition-colors shadow-lg hover:shadow-primary/20"
       >
@@ -30,19 +34,31 @@ export function ClientForm() {
       <div className="glass p-6 rounded-2xl border-border/50 w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-semibold">New Client</h3>
-          <button onClick={() => setIsOpen(false)} className="text-muted-foreground hover:text-foreground">
-            ✕
-          </button>
+          <button onClick={() => setIsOpen(false)} className="text-muted-foreground hover:text-foreground">✕</button>
         </div>
         <form action={onSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <label htmlFor="name" className="text-sm font-medium">Name *</label>
-            <input required type="text" id="name" name="name" className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+          <div className="flex gap-4 items-start">
+            <div className="shrink-0">
+              <label className="text-sm font-medium block mb-1.5">Logo</label>
+              <ImageUploader
+                folder="client-logos"
+                currentUrl={logoUrl || null}
+                onUploaded={setLogoUrl}
+                placeholder="Upload logo"
+              />
+            </div>
+            <div className="flex-1 flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="name" className="text-sm font-medium">Name *</label>
+                <input required type="text" id="name" name="name" className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="industry" className="text-sm font-medium">Industry *</label>
+                <input required type="text" id="industry" name="industry" className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="industry" className="text-sm font-medium">Industry *</label>
-            <input required type="text" id="industry" name="industry" className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label htmlFor="yearStart" className="text-sm font-medium">Year Start *</label>
@@ -53,11 +69,7 @@ export function ClientForm() {
               <input type="number" id="yearEnd" name="yearEnd" placeholder="Present" className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="logoUrl" className="text-sm font-medium">Logo URL</label>
-            <input type="url" id="logoUrl" name="logoUrl" placeholder="https://..." className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-          </div>
-          
+
           <div className="flex justify-end gap-3 mt-4">
             <button type="button" onClick={() => setIsOpen(false)} className="px-4 py-2 rounded-md font-medium text-sm hover:bg-secondary transition-colors text-muted-foreground">
               Cancel

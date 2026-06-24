@@ -20,8 +20,9 @@ export async function batchAddProjects(formData: FormData) {
     const status = formData.get(`status_${i}`) as string
     const description = formData.get(`description_${i}`) as string
     const projectDate = formData.get(`projectDate_${i}`) as string
+    const thumbnailUrl = formData.get(`thumbnailUrl_${i}`) as string
     if (!title || !clientId || !type || !status) continue
-    inserts.push({ title, client_id: clientId, type, status, description, project_date: projectDate || null })
+    inserts.push({ title, client_id: clientId, type, status, description, project_date: projectDate || null, thumbnail_url: thumbnailUrl || null })
   }
 
   if (inserts.length === 0) return { error: 'No valid rows.' }
