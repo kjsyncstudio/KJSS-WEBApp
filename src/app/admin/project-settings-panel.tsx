@@ -39,9 +39,9 @@ function SettingColumn({ kind, label, values }: { kind: Kind; label: string; val
               <>
                 <span className="flex-1 text-sm">{v}</span>
                 <button onClick={() => { setEditing(v); setEditValue(v) }}
-                  className="text-xs text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">Rename</button>
+                  className="text-xs text-muted-foreground hover:text-foreground">Edit</button>
                 <button onClick={() => run(() => deleteSetting(kind, v))} disabled={pending}
-                  className="text-xs text-destructive hover:underline opacity-0 group-hover:opacity-100 transition-opacity">Delete</button>
+                  className="text-xs text-destructive hover:underline">Delete</button>
               </>
             )}
           </div>
