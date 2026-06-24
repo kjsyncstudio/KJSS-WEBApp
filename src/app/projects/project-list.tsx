@@ -1,7 +1,7 @@
 'use client'
 
 import { deleteProject, updateProjectStatus, bulkDeleteProjects, bulkUpdateProjects } from './actions'
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
 type Project = {
@@ -69,6 +69,11 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
   const router = useRouter()
   const [filter, setFilter] = useState<string>('All')
   const [view, setView] = useState<ViewMode>('card')
+  useEffect(() => {
+    const saved = localStorage.getItem('projectView') as ViewMode | null
+    if (saved === 'card' || saved === 'list' || saved === 'compact') setView(saved)
+  }, [])
+  const changeView = (v: ViewMode) => { setView(v); localStorage.setItem('projectView', v) }
   const [selectMode, setSelectMode] = useState(false)
   const [hideCompleted, setHideCompleted] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -222,7 +227,7 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
         </button>
         <div className="flex items-center gap-1 glass border border-border/50 rounded-lg p-1 shrink-0">
           {([['card', CardIcon], ['list', ListIcon], ['compact', CompactIcon]] as const).map(([mode, Icon]) => (
-            <button key={mode} onClick={() => setView(mode)} title={mode}
+            <button key={mode} onClick={() => changeView(mode)} title={mode}
               className={`p-1.5 rounded-md transition-colors ${view === mode ? 'bg-primary/15' : 'hover:bg-muted/50'}`}>
               <Icon active={view === mode} />
             </button>
