@@ -71,6 +71,7 @@ export function BatchForm({ clients: initialClients, statuses, types }: { client
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    const form = e.currentTarget
     setSubmitting(true)
 
     // Upload all thumbnail files first
@@ -87,7 +88,7 @@ export function BatchForm({ clients: initialClients, statuses, types }: { client
       }
     }))
 
-    const fd = new FormData(e.currentTarget)
+    const fd = new FormData(form)
     fd.set('count', String(rows.length))
     rows.forEach((row, i) => {
       fd.set(`title_${i}`, row.title)
