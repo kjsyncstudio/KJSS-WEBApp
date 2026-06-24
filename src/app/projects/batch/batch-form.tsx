@@ -28,6 +28,55 @@ type Row = {
   thumbnailFile: File | null // actual file to upload
 }
 
+const MONTHS: Record<string, number> = {
+  jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4,
+  may: 5, jun: 6, june: 6, jul: 7, july: 7, aug: 8, august: 8,
+  sep: 9, sept: 9, september: 9, oct: 10, october: 10, nov: 11, november: 11, dec: 12, december: 12,
+}
+
+// Scan a title for a year+month and a known client name. Returns cleaned title + extracted fields.
+function cleanTitle(title: string, clients: Client[]): { title: string; projectDate: string; clientId: string } {
+  let t = title
+  let projectDate = ''
+  let clientId = ''
+
+  // --- date: try "Month YYYY", "YYYY Month", "YYYY-MM", "MM/YYYY" ---
+  const monthNames = Object.keys(MONTHS).join('|')
+  const patterns: { re: RegExp; y: number; m: number }[] = [
+    { re: new RegExp(`\\b(${monthNames})\\.?\\s*[,/-]?\\s*(\\d{4})\\b`, 'i'), y: 2, m: 1 },
+    { re: new RegExp(`\\b(\\d{4})\\s*[,/-]?\\s*(${monthNames})\\b`, 'i'), y: 1, m: 2 },
+    { re: /\b(\d{4})[-/.](\d{1,2})\b/, y: 1, m: 2 },
+    { re: /\b(\d{1,2})[-/.](\d{4})\b/, y: 2, m: 1 },
+  ]
+  for (const p of patterns) {
+    const match = t.match(p.re)
+    if (!match) continue
+    const yearStr = match[p.y]
+    const monStr = match[p.m]
+    const month = MONTHS[monStr.toLowerCase()] ?? parseInt(monStr, 10)
+    const year = parseInt(yearStr, 10)
+    if (month >= 1 && month <= 12 && year > 1900) {
+      projectDate = `${year}-${String(month).padStart(2, '0')}-01`
+      t = t.replace(match[0], ' ')
+      break
+    }
+  }
+
+  // --- client: longest matching client name found in title ---
+  const found = clients
+    .filter(c => c.name && new RegExp(`\\b${c.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(t))
+    .sort((a, b) => b.name.length - a.name.length)[0]
+  if (found) {
+    clientId = found.id
+    t = t.replace(new RegExp(`\\b${found.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), ' ')
+  }
+
+  // tidy leftover separators / whitespace
+  t = t.replace(/[\s\-–—:|,/]+/g, ' ').replace(/^[\s\-–—:|,]+|[\s\-–—:|,]+$/g, '').replace(/\s{2,}/g, ' ').trim()
+
+  return { title: t || title.trim(), projectDate, clientId }
+}
+
 function emptyRow(id: number, base?: Row): Row {
   return {
     id,
@@ -61,6 +110,19 @@ export function BatchForm({ clients: initialClients, statuses, types }: { client
 
   function updateRow(id: number, field: keyof Row, value: string) {
     setRows(r => r.map(row => row.id === id ? { ...row, [field]: value } : row))
+  }
+
+  function cleanupRow(id: number) {
+    setRows(r => r.map(row => {
+      if (row.id !== id) return row
+      const c = cleanTitle(row.title, clients)
+      return {
+        ...row,
+        title: c.title,
+        projectDate: c.projectDate || row.projectDate,
+        clientId: c.clientId || row.clientId,
+      }
+    }))
   }
 
   function handleThumb(id: number, file: File | null) {
@@ -197,12 +259,19 @@ export function BatchForm({ clients: initialClients, statuses, types }: { client
             className="w-1/2 bg-background/50 border border-border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
           />
 
-          {/* Remove */}
-          <button
-            type="button" onClick={() => removeRow(row.id)}
-            className="text-muted-foreground hover:text-red-500 transition-colors self-start text-lg leading-none mt-0.5"
-            title="Remove row"
-          >×</button>
+          {/* Actions */}
+          <div className="flex flex-col items-end gap-2 self-start">
+            <button
+              type="button" onClick={() => removeRow(row.id)}
+              className="text-muted-foreground hover:text-red-500 transition-colors text-lg leading-none"
+              title="Remove row"
+            >×</button>
+            <button
+              type="button" onClick={() => cleanupRow(row.id)}
+              className="text-[11px] whitespace-nowrap border border-border rounded-md px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              title="Extract date & client from title, strip them out"
+            >Clean Up</button>
+          </div>
         </div>
       ))}
 
