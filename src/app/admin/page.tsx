@@ -36,6 +36,16 @@ export default async function AdminPage() {
   const { data: clients } = await supabase.from('clients').select('id, name').order('name')
   const { data: permissions } = await supabase.from('client_permissions').select('user_id, client_id, can_read, can_write')
 
+  // Who deleted each project (latest delete entry per project from audit log)
+  const { data: delLog } = await supabase
+    .from('audit_log')
+    .select('entity_id, user_email, created_at')
+    .eq('entity_type', 'project').eq('action', 'delete')
+    .order('created_at', { ascending: false })
+  const deleterBy: Record<string, string> = {}
+  for (const e of delLog || []) if (e.entity_id && !deleterBy[e.entity_id]) deleterBy[e.entity_id] = e.user_email
+  const deletedEnriched = (deleted || []).map(d => ({ ...d, deleted_by: deleterBy[d.id] ?? null }))
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors">
       <Header />
@@ -50,7 +60,7 @@ export default async function AdminPage() {
           recentLog={recentLog || []}
           statuses={statuses}
           types={types}
-          deleted={(deleted as never) || []}
+          deleted={deletedEnriched as never}
           clients={clients || []}
           permissions={permissions || []}
         />

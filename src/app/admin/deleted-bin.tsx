@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { restoreProject, hardDeleteProject } from './settings-actions'
 
-type Deleted = { id: string; title: string; deleted_at: string; clients?: { name: string } }
+type Deleted = { id: string; title: string; deleted_at: string; deleted_by?: string | null; clients?: { name: string } }
 
 export function DeletedBin({ projects }: { projects: Deleted[] }) {
   const [pending, start] = useTransition()
@@ -26,18 +26,20 @@ export function DeletedBin({ projects }: { projects: Deleted[] }) {
             <tr>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Project</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Client</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Deleted by</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Deleted</th>
               <th className="px-4 py-3 w-40" />
             </tr>
           </thead>
           <tbody>
             {projects.length === 0 && (
-              <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Bin is empty.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Bin is empty.</td></tr>
             )}
             {projects.map((p, i) => (
               <tr key={p.id} className={`border-b border-border/30 last:border-0 ${i % 2 === 0 ? '' : 'bg-muted/5'}`}>
                 <td className="px-4 py-3 font-medium">{p.title}</td>
                 <td className="px-4 py-3 text-muted-foreground">{p.clients?.name ?? '—'}</td>
+                <td className="px-4 py-3 text-muted-foreground">{p.deleted_by ?? '—'}</td>
                 <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{new Date(p.deleted_at).toLocaleString()}</td>
                 <td className="px-4 py-3 text-right whitespace-nowrap">
                   <button onClick={() => run(p.id, () => restoreProject(p.id))} disabled={pending && busy === p.id}

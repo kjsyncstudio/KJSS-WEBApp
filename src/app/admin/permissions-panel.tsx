@@ -15,8 +15,8 @@ export function PermissionsPanel({ members, clients, permissions }: { members: M
   const [err, setErr] = useState('')
   const [pending, start] = useTransition()
 
-  // Only contractors/project managers are worth delegating to
-  const delegatable = members.filter(m => m.role === 'project_manager' || m.role === 'guest')
+  // Any non-admin member can be delegated to (admins already have full access)
+  const delegatable = members.filter(m => m.role !== 'admin')
 
   const nameOf = (id: string) => { const m = members.find(x => x.id === id); return m?.full_name || m?.email || id }
   const clientName = (id: string) => clients.find(c => c.id === id)?.name ?? id
