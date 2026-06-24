@@ -64,7 +64,7 @@ export default async function ProjectsPage() {
           )}
         </div>
 
-        <ProjectList projects={projects || []} canManage={canManage} />
+        <ProjectList projects={projects || []} canManage={canManage} clients={clients} />
       </main>
     </div>
   )

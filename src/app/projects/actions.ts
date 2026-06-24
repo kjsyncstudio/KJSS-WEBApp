@@ -56,6 +56,30 @@ export async function deleteProject(id: string) {
   return { success: true }
 }
 
+export async function bulkDeleteProjects(ids: string[]) {
+  const supabase = await createClient()
+  const { error } = await supabase.from('projects').delete().in('id', ids)
+  if (error) return { error: error.message }
+  for (const id of ids) await logAudit({ action: 'delete', entity_type: 'project', entity_id: id })
+  revalidatePath('/projects')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export async function bulkUpdateProjects(ids: string[], fields: { type?: string; client_id?: string; project_date?: string | null }) {
+  const supabase = await createClient()
+  const update: Record<string, unknown> = {}
+  if (fields.type) update.type = fields.type
+  if (fields.client_id) update.client_id = fields.client_id
+  if ('project_date' in fields) update.project_date = fields.project_date || null
+  if (Object.keys(update).length === 0) return { error: 'Nothing to update.' }
+  const { error } = await supabase.from('projects').update(update).in('id', ids)
+  if (error) return { error: error.message }
+  for (const id of ids) await logAudit({ action: 'update', entity_type: 'project', entity_id: id, metadata: fields })
+  revalidatePath('/projects')
+  return { success: true }
+}
+
 export async function updateProjectStatus(id: string, status: string) {
   const supabase = await createClient()
 

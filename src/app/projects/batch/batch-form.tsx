@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { batchAddProjects } from './actions'
 import { createClient } from '@/utils/supabase/client'
+import { CsvUploader } from './csv-uploader'
 
 type Client = { id: string; name: string }
 
@@ -101,8 +102,24 @@ export function BatchForm({ clients }: { clients: Client[] }) {
     setSubmitting(false)
   }
 
+  function handleImport(imported: { title: string; clientId: string; type: string; status: string; description: string; projectDate: string }[]) {
+    const newRows = imported.slice(0, MAX_ROWS - rows.length).map(r => ({
+      id: Date.now() + Math.random(),
+      title: r.title,
+      clientId: r.clientId,
+      type: r.type,
+      status: r.status,
+      description: r.description,
+      projectDate: r.projectDate,
+      thumbnail: null,
+      thumbnailFile: null,
+    }))
+    setRows(r => [...r, ...newRows])
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      <CsvUploader clients={clients} onImport={handleImport} />
       {rows.map((row, i) => (
         <div
           key={row.id}
