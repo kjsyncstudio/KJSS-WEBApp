@@ -74,8 +74,19 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
     .single()
   
   const role = profile?.role
-  const canManage = role === 'admin' || role === 'project_manager'
   const isAdmin = role === 'admin'
+
+  // Edit right: admin always; others need write permission on this project's client
+  let canManage = isAdmin
+  if (!isAdmin && project?.client_id) {
+    const { data: perm } = await supabase
+      .from('client_permissions')
+      .select('can_write')
+      .eq('user_id', user.id)
+      .eq('client_id', project.client_id)
+      .maybeSingle()
+    canManage = !!perm?.can_write
+  }
 
   if (!project) {
     return (

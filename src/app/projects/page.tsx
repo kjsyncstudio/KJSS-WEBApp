@@ -24,7 +24,15 @@ export default async function ProjectsPage() {
     .single()
 
   const role = profile?.role || 'guest'
-  const canManage = role === 'admin'
+  const isAdmin = role === 'admin'
+
+  // Clients this user may edit (write delegation); admins edit everything
+  let writableClients: string[] = []
+  if (!isAdmin) {
+    const { data: perms } = await supabase.from('client_permissions').select('client_id').eq('user_id', user.id).eq('can_write', true)
+    writableClients = (perms || []).map(p => p.client_id)
+  }
+  const canManage = isAdmin || writableClients.length > 0
 
   // Fetch projects (RLS will automatically filter for contractors/guests based on assignments)
   const { data: projects } = await supabase
@@ -60,7 +68,7 @@ export default async function ProjectsPage() {
               Manage your projects, view status, and collaborate.
             </p>
           </div>
-          {canManage && (
+          {isAdmin && (
             <div className="flex gap-3">
               <Link href="/projects/batch" className="border border-border px-4 py-2 rounded-md font-medium text-sm hover:bg-muted/50 transition-colors">
                 Batch Add
@@ -70,7 +78,7 @@ export default async function ProjectsPage() {
           )}
         </div>
 
-        <ProjectList projects={projects || []} canManage={canManage} clients={clients} statuses={statuses} types={types} />
+        <ProjectList projects={projects || []} canManage={canManage} isAdmin={isAdmin} writableClients={writableClients} clients={clients} statuses={statuses} types={types} />
       </main>
     </div>
   )

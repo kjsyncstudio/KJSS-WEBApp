@@ -61,9 +61,11 @@ function CompactIcon({ active }: { active: boolean }) {
   )
 }
 
-export function ProjectList({ projects, canManage, clients = [], statuses, types }: { projects: Project[]; canManage: boolean; clients?: Client[]; statuses?: string[]; types?: string[] }) {
+export function ProjectList({ projects, canManage, clients = [], statuses, types, isAdmin = false, writableClients = [] }: { projects: Project[]; canManage: boolean; clients?: Client[]; statuses?: string[]; types?: string[]; isAdmin?: boolean; writableClients?: string[] }) {
   const typeOpts = types?.length ? types : DEFAULT_TYPES
   const statusOpts = statuses?.length ? statuses : DEFAULT_STATUSES
+  // Per-project edit right: admins edit all, PMs edit clients granted write
+  const canEdit = (p: Project) => isAdmin || writableClients.includes(p.client_id)
   const router = useRouter()
   const [filter, setFilter] = useState<string>('All')
   const [view, setView] = useState<ViewMode>('card')
@@ -134,7 +136,7 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
     selected.has(id) ? 'ring-2 ring-primary border-primary/50' : ''
 
   const StatusSelect = ({ project }: { project: Project }) =>
-    canManage ? (
+    canEdit(project) ? (
       <select
         value={project.status}
         onChange={e => handleStatusChange(project.id, e.target.value)}
@@ -270,7 +272,7 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
               </p>
               <div className="mt-auto pt-4 border-t border-border/50 flex items-center justify-between">
                 <div onClick={e => e.stopPropagation()}><StatusSelect project={project} /></div>
-                {canManage && (
+                {canEdit(project) && (
                   <button onClick={e => { e.stopPropagation(); handleDelete(project.id) }}
                     disabled={deletingId === project.id}
                     className="text-xs text-destructive hover:underline opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50">
@@ -316,14 +318,14 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
                   <td className="px-4 py-3 text-muted-foreground">{project.clients?.name || '—'}</td>
                   <td className="px-4 py-3 text-muted-foreground">{project.type}</td>
                   <td className="px-4 py-3">
-                    {canManage
+                    {canEdit(project)
                       ? <div onClick={e => e.stopPropagation()}><StatusSelect project={project} /></div>
                       : <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${statusBadge(project.status)}`}>{project.status}</span>
                     }
                   </td>
                   <td className="px-4 py-3 text-muted-foreground text-xs max-w-[12rem] truncate">{project.description || '—'}</td>
                   <td className="px-4 py-3 text-right">
-                    {canManage && (
+                    {canEdit(project) && (
                       <button onClick={() => handleDelete(project.id)} disabled={deletingId === project.id}
                         className="text-xs text-destructive hover:underline opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50">
                         Delete
@@ -357,14 +359,14 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
               </span>
               <span className="text-xs text-muted-foreground hidden sm:block truncate max-w-[8rem]">{project.clients?.name}</span>
               <span className="text-xs text-muted-foreground hidden md:block">{project.type}</span>
-              {canManage
+              {canEdit(project)
                 ? <div onClick={e => e.stopPropagation()}><StatusSelect project={project} /></div>
                 : <span className={`text-xs font-medium ${
                     project.status === 'Active' ? 'text-green-500' :
                     project.status === 'Done' ? 'text-blue-500' :
                     project.status === 'Shelved' ? 'text-orange-500' : 'text-zinc-400'}`}>{project.status}</span>
               }
-              {canManage && (
+              {canEdit(project) && (
                 <button onClick={() => handleDelete(project.id)} disabled={deletingId === project.id}
                   className="text-xs text-destructive hover:underline opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 ml-1">
                   ×
