@@ -7,6 +7,7 @@ import { ExcelGrid } from './excel-grid'
 import { ProjectLinks } from './project-links'
 import { GuestToggle } from './guest-toggle'
 import { ProjectThumbnail } from './project-thumbnail'
+import { ProjectDescription } from './project-description'
 
 export default async function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
@@ -132,12 +133,11 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
           canManage={canManage}
         />
 
-        <div className="glass p-8 rounded-2xl border-border/50 mb-8">
-          {project.description && <h3 className="text-lg font-semibold mb-2">Description</h3>}
-          <p className="text-muted-foreground whitespace-pre-wrap">
-            {project.description || 'insert description'}
-          </p>
-        </div>
+        <ProjectDescription
+          projectId={project.id}
+          initial={project.description || ''}
+          canManage={canManage}
+        />
 
         <ProjectLinks 
           projectId={project.id}

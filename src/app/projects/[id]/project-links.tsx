@@ -55,7 +55,6 @@ export function ProjectLinks({
         )}
 
         <div className="flex flex-col gap-2">
-          {uploadLinks.length === 0 && !isAddingUpload && <p className="text-sm text-muted-foreground">No upload links added.</p>}
           {uploadLinks.map(link => (
             <div key={link.id} className="flex justify-between items-center bg-secondary/20 px-3 py-2 rounded-lg border border-border/30 group">
               <div className="flex flex-col overflow-hidden">
@@ -102,7 +101,6 @@ export function ProjectLinks({
         )}
 
         <div className="flex flex-col gap-2">
-          {finalUrls.length === 0 && !isAddingFinal && <p className="text-sm text-muted-foreground">No final URLs added.</p>}
           {finalUrls.map(url => (
             <div key={url.id} className="flex justify-between items-center bg-secondary/20 px-3 py-2 rounded-lg border border-border/30 group">
               <div className="flex flex-col overflow-hidden">

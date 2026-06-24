@@ -13,6 +13,15 @@ export async function saveThumbnail(projectId: string, thumbnailUrl: string) {
   return { success: true }
 }
 
+export async function saveDescription(projectId: string, description: string) {
+  const supabase = await createClient()
+  const { error } = await supabase.from('projects').update({ description }).eq('id', projectId)
+  if (error) return { error: error.message }
+  await logAudit({ action: 'update', entity_type: 'project', entity_id: projectId, metadata: { field: 'description' } })
+  revalidatePath(`/projects/${projectId}`)
+  return { success: true }
+}
+
 export async function toggleGuestViewable(projectId: string, value: boolean) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
