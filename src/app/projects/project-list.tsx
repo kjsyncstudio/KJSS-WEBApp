@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 type Project = {
   id: string
   title: string
-  status: 'Active' | 'Done' | 'Shelved' | 'Pending'
+  status: string
   type: string
   client_id: string
   description: string | null
@@ -17,14 +17,17 @@ type Project = {
 type Client = { id: string; name: string }
 type ViewMode = 'card' | 'list' | 'compact'
 
-const TYPES = ['Media Production', 'Event', 'Consultant', 'Other']
+const DEFAULT_TYPES = ['Media Production', 'Event', 'Consultant', 'Other']
+const DEFAULT_STATUSES = ['Pending', 'Active', 'Shelved', 'Done']
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   Active: 'bg-green-500/10 text-green-500 border-green-500/20',
   Done: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
   Shelved: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
   Pending: 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20',
 }
+// ponytail: custom statuses get a neutral badge, no per-status color config
+const statusBadge = (s: string) => statusColors[s] ?? 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20'
 
 function CardIcon({ active }: { active: boolean }) {
   return (
@@ -58,7 +61,9 @@ function CompactIcon({ active }: { active: boolean }) {
   )
 }
 
-export function ProjectList({ projects, canManage, clients = [] }: { projects: Project[]; canManage: boolean; clients?: Client[] }) {
+export function ProjectList({ projects, canManage, clients = [], statuses, types }: { projects: Project[]; canManage: boolean; clients?: Client[]; statuses?: string[]; types?: string[] }) {
+  const typeOpts = types?.length ? types : DEFAULT_TYPES
+  const statusOpts = statuses?.length ? statuses : DEFAULT_STATUSES
   const router = useRouter()
   const [filter, setFilter] = useState<string>('All')
   const [view, setView] = useState<ViewMode>('card')
@@ -133,10 +138,7 @@ export function ProjectList({ projects, canManage, clients = [] }: { projects: P
         onChange={e => handleStatusChange(project.id, e.target.value)}
         className="text-xs bg-secondary border border-border rounded-md px-2 py-1 text-muted-foreground focus:outline-none"
       >
-        <option value="Pending">Pending</option>
-        <option value="Active">Active</option>
-        <option value="Shelved">Shelved</option>
-        <option value="Done">Done</option>
+        {statusOpts.map(s => <option key={s} value={s}>{s}</option>)}
       </select>
     ) : null
 
@@ -151,7 +153,7 @@ export function ProjectList({ projects, canManage, clients = [] }: { projects: P
 
           <select value={bulkType} onChange={e => setBulkType(e.target.value)} className={inputCls}>
             <option value="">Change type…</option>
-            {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            {typeOpts.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
 
           {clients.length > 0 && (
@@ -199,7 +201,7 @@ export function ProjectList({ projects, canManage, clients = [] }: { projects: P
           </button>
         )}
         <div className="flex gap-2 overflow-x-auto pb-1 flex-1">
-          {['All', 'Active', 'Pending', 'Shelved', 'Done'].map(status => (
+          {['All', ...statusOpts].map(status => (
             <button key={status} onClick={() => setFilter(status)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 filter === status ? 'bg-primary text-primary-foreground shadow-md' : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'
@@ -251,7 +253,7 @@ export function ProjectList({ projects, canManage, clients = [] }: { projects: P
                     <span>{project.type}</span>
                   </div>
                 </div>
-                <div className={`px-2.5 py-1 rounded-full text-xs font-semibold border shrink-0 ${statusColors[project.status]}`}>
+                <div className={`px-2.5 py-1 rounded-full text-xs font-semibold border shrink-0 ${statusBadge(project.status)}`}>
                   {project.status}
                 </div>
               </div>
@@ -308,7 +310,7 @@ export function ProjectList({ projects, canManage, clients = [] }: { projects: P
                   <td className="px-4 py-3">
                     {canManage
                       ? <div onClick={e => e.stopPropagation()}><StatusSelect project={project} /></div>
-                      : <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${statusColors[project.status]}`}>{project.status}</span>
+                      : <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${statusBadge(project.status)}`}>{project.status}</span>
                     }
                   </td>
                   <td className="px-4 py-3 text-muted-foreground text-xs max-w-[12rem] truncate">{project.description || '—'}</td>

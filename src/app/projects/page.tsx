@@ -33,6 +33,7 @@ export default async function ProjectsPage() {
       *,
       clients ( name )
     `)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
   // If they can manage, fetch all clients for the project creation form
@@ -41,6 +42,11 @@ export default async function ProjectsPage() {
     const { data } = await supabase.from('clients').select('id, name').order('name')
     if (data) clients = data
   }
+
+  // Editable statuses / types from admin settings
+  const { data: settings } = await supabase.from('project_settings').select('kind, value').order('sort')
+  const statuses = (settings || []).filter(s => s.kind === 'status').map(s => s.value)
+  const types = (settings || []).filter(s => s.kind === 'type').map(s => s.value)
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors">
@@ -59,12 +65,12 @@ export default async function ProjectsPage() {
               <Link href="/projects/batch" className="border border-border px-4 py-2 rounded-md font-medium text-sm hover:bg-muted/50 transition-colors">
                 Batch Add
               </Link>
-              <ProjectForm clients={clients} />
+              <ProjectForm clients={clients} statuses={statuses} types={types} />
             </div>
           )}
         </div>
 
-        <ProjectList projects={projects || []} canManage={canManage} clients={clients} />
+        <ProjectList projects={projects || []} canManage={canManage} clients={clients} statuses={statuses} types={types} />
       </main>
     </div>
   )

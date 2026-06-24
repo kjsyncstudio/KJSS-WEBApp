@@ -20,18 +20,20 @@ export type ErrorRow = ResolvedRow & {
 type Client = { id: string; name: string }
 
 const VALID_TYPES = ['Media Production', 'Event', 'Consultant', 'Other']
-const VALID_STATUSES = ['Active', 'Pending', 'Shelved', 'Done']
+const DEFAULT_STATUSES = ['Active', 'Pending', 'Shelved', 'Done']
 
 interface ErrorResolverProps {
   errorRows: ErrorRow[]
   clients: Client[]
+  validStatuses?: string[]
   onResolved: (rows: ResolvedRow[], newClients: Client[]) => void
   onCancel: () => void
 }
 
 type ClientResolution = { clientId: string; clientName: string }
 
-export function ErrorResolver({ errorRows, clients: initialClients, onResolved, onCancel }: ErrorResolverProps) {
+export function ErrorResolver({ errorRows, clients: initialClients, validStatuses, onResolved, onCancel }: ErrorResolverProps) {
+  const VALID_STATUSES = validStatuses?.length ? validStatuses : DEFAULT_STATUSES
   const [index, setIndex] = useState(0)
   const [clients, setClients] = useState<Client[]>(initialClients)
   const [resolved, setResolved] = useState<ResolvedRow[]>([])

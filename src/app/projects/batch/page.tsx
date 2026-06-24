@@ -14,6 +14,10 @@ export default async function BatchProjectPage() {
 
   const { data: clients } = await supabase.from('clients').select('id, name').order('name')
 
+  const { data: settings } = await supabase.from('project_settings').select('kind, value').order('sort')
+  const statuses = (settings || []).filter(s => s.kind === 'status').map(s => s.value)
+  const types = (settings || []).filter(s => s.kind === 'type').map(s => s.value)
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors">
       <Header />
@@ -25,7 +29,7 @@ export default async function BatchProjectPage() {
           <h2 className="text-3xl font-bold tracking-tight">Batch Add Projects</h2>
           <p className="text-muted-foreground mt-1 text-sm">Add up to 20 projects at once.</p>
         </div>
-        <BatchForm clients={clients || []} />
+        <BatchForm clients={clients || []} statuses={statuses} types={types} />
       </main>
     </div>
   )

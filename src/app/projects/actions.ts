@@ -43,7 +43,8 @@ export async function deleteProject(id: string) {
   const supabase = await createClient()
 
   const { data: project } = await supabase.from('projects').select('title').eq('id', id).single()
-  const { error } = await supabase.from('projects').delete().eq('id', id)
+  // Soft delete: move to bin, only admins hard-delete later
+  const { error } = await supabase.from('projects').update({ deleted_at: new Date().toISOString() }).eq('id', id)
 
   if (error) {
     console.error('Error deleting project:', error)
@@ -58,7 +59,7 @@ export async function deleteProject(id: string) {
 
 export async function bulkDeleteProjects(ids: string[]) {
   const supabase = await createClient()
-  const { error } = await supabase.from('projects').delete().in('id', ids)
+  const { error } = await supabase.from('projects').update({ deleted_at: new Date().toISOString() }).in('id', ids)
   if (error) return { error: error.message }
   for (const id of ids) await logAudit({ action: 'delete', entity_type: 'project', entity_id: id })
   revalidatePath('/projects')

@@ -8,7 +8,12 @@ type Client = {
   name: string
 }
 
-export function ProjectForm({ clients }: { clients: Client[] }) {
+const DEFAULT_TYPES = ['Media Production', 'Event', 'Consultant', 'Other']
+const DEFAULT_STATUSES = ['Pending', 'Active', 'Shelved', 'Done']
+
+export function ProjectForm({ clients, statuses, types }: { clients: Client[]; statuses?: string[]; types?: string[] }) {
+  const typeOpts = types?.length ? types : DEFAULT_TYPES
+  const statusOpts = statuses?.length ? statuses : DEFAULT_STATUSES
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -48,19 +53,13 @@ export function ProjectForm({ clients }: { clients: Client[] }) {
             <div className="flex flex-col gap-2">
               <label htmlFor="type" className="text-sm font-medium">Type *</label>
               <select required id="type" name="type" className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
-                <option value="Media Production">Media Production</option>
-                <option value="Event">Event</option>
-                <option value="Consultant">Consultant</option>
-                <option value="Other">Other</option>
+                {typeOpts.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="status" className="text-sm font-medium">Status *</label>
               <select required id="status" name="status" className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
-                <option value="Pending">Pending</option>
-                <option value="Active">Active</option>
-                <option value="Shelved">Shelved</option>
-                <option value="Done">Done</option>
+                {statusOpts.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
           </div>

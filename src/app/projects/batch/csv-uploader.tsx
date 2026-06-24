@@ -16,10 +16,7 @@ type ParsedRow = {
   errors: string[]
 }
 
-const VALID_TYPES = ['Media Production', 'Event', 'Consultant', 'Other']
-const VALID_STATUSES = ['Active', 'Pending', 'Shelved', 'Done']
-
-function parseCSV(text: string, clients: Client[]): ParsedRow[] {
+function parseCSV(text: string, clients: Client[], VALID_TYPES: string[], VALID_STATUSES: string[]): ParsedRow[] {
   const lines = text.trim().split('\n')
   if (lines.length < 2) return []
   const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g, '_'))
@@ -50,7 +47,7 @@ function parseCSV(text: string, clients: Client[]): ParsedRow[] {
   })
 }
 
-function parseJSON(text: string, clients: Client[]): ParsedRow[] {
+function parseJSON(text: string, clients: Client[], VALID_TYPES: string[], VALID_STATUSES: string[]): ParsedRow[] {
   const arr = JSON.parse(text)
   if (!Array.isArray(arr)) throw new Error('JSON must be an array')
   return arr.map((item: Record<string, string>) => {
@@ -69,10 +66,12 @@ function parseJSON(text: string, clients: Client[]): ParsedRow[] {
 
 interface CsvUploaderProps {
   clients: Client[]
+  validTypes: string[]
+  validStatuses: string[]
   onImport: (rows: ResolvedRow[], newClients: Client[]) => void
 }
 
-export function CsvUploader({ clients: initialClients, onImport }: CsvUploaderProps) {
+export function CsvUploader({ clients: initialClients, validTypes, validStatuses, onImport }: CsvUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [validRows, setValidRows] = useState<ResolvedRow[]>([])
   const [errorRows, setErrorRows] = useState<ErrorRow[]>([])
@@ -87,7 +86,7 @@ export function CsvUploader({ clients: initialClients, onImport }: CsvUploaderPr
     setFileName(file.name)
     const text = await file.text()
     try {
-      const rows = file.name.endsWith('.json') ? parseJSON(text, clients) : parseCSV(text, clients)
+      const rows = file.name.endsWith('.json') ? parseJSON(text, clients, validTypes, validStatuses) : parseCSV(text, clients, validTypes, validStatuses)
       const valid = rows.filter(r => r.errors.length === 0).map(({ errors: _, rawClientName: __, ...r }) => r)
       const errs = rows.filter(r => r.errors.length > 0) as ErrorRow[]
       setValidRows(valid)
@@ -116,6 +115,7 @@ export function CsvUploader({ clients: initialClients, onImport }: CsvUploaderPr
         <ErrorResolver
           errorRows={errorRows}
           clients={clients}
+          validStatuses={validStatuses}
           onResolved={(fromResolver, newClients) => handleFinish(validRows, fromResolver, newClients)}
           onCancel={() => { setResolving(false); setErrorRows([]); setValidRows([]) }}
         />

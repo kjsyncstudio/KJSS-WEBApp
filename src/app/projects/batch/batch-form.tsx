@@ -7,8 +7,8 @@ import { CsvUploader } from './csv-uploader'
 
 type Client = { id: string; name: string }
 
-const TYPES = ['Media Production', 'Event', 'Consultant', 'Other']
-const STATUSES = ['Pending', 'Active', 'Shelved', 'Done']
+const DEFAULT_TYPES = ['Media Production', 'Event', 'Consultant', 'Other']
+const DEFAULT_STATUSES = ['Pending', 'Active', 'Shelved', 'Done']
 const STATUS_COLORS: Record<string, string> = {
   Active: 'text-green-500',
   Done: 'text-blue-500',
@@ -44,7 +44,9 @@ function emptyRow(id: number, base?: Row): Row {
   }
 }
 
-export function BatchForm({ clients: initialClients }: { clients: Client[] }) {
+export function BatchForm({ clients: initialClients, statuses, types }: { clients: Client[]; statuses?: string[]; types?: string[] }) {
+  const TYPES = types?.length ? types : DEFAULT_TYPES
+  const STATUSES = statuses?.length ? statuses : DEFAULT_STATUSES
   const [clients, setClients] = useState<Client[]>(initialClients)
   const [rows, setRows] = useState<Row[]>([emptyRow(0)])
   const [submitting, setSubmitting] = useState(false)
@@ -121,7 +123,7 @@ export function BatchForm({ clients: initialClients }: { clients: Client[] }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <CsvUploader clients={clients} onImport={(rows, newClients) => handleImport(rows, newClients)} />
+      <CsvUploader clients={clients} validTypes={TYPES} validStatuses={STATUSES} onImport={(rows, newClients) => handleImport(rows, newClients)} />
       {rows.map((row, i) => (
         <div
           key={row.id}
