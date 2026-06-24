@@ -62,9 +62,12 @@ export function ProjectList({ projects, canManage, clients = [] }: { projects: P
   const router = useRouter()
   const [filter, setFilter] = useState<string>('All')
   const [view, setView] = useState<ViewMode>('card')
+  const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  function exitSelectMode() { setSelectMode(false); setSelected(new Set()) }
 
   // Bulk edit state
   const [bulkType, setBulkType] = useState('')
@@ -83,7 +86,7 @@ export function ProjectList({ projects, canManage, clients = [] }: { projects: P
     })
   }
 
-  function deselectAll() { setSelected(new Set()) }
+  function deselectAll() { exitSelectMode() }
 
   async function handleDelete(id: string) {
     if (!confirm('Delete this project?')) return
@@ -169,9 +172,10 @@ export function ProjectList({ projects, canManage, clients = [] }: { projects: P
             className="px-3 py-1.5 bg-destructive/10 text-destructive rounded-md text-xs font-semibold hover:bg-destructive/20 transition-colors disabled:opacity-50">
             Delete all
           </button>
-          <button onClick={deselectAll}
+
+              <button onClick={exitSelectMode}
             className="px-3 py-1.5 border border-border rounded-md text-xs font-medium hover:bg-muted/50 transition-colors ml-auto">
-            Deselect all
+            Exit Select
           </button>
 
           {bulkFeedback && (
@@ -184,7 +188,17 @@ export function ProjectList({ projects, canManage, clients = [] }: { projects: P
 
       {/* Filters + view toggle */}
       <div className="flex items-center justify-between mb-6 gap-4">
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        {canManage && (
+          <button
+            onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
+            className={`shrink-0 px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+              selectMode ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted/50'
+            }`}
+          >
+            {selectMode ? 'Selecting…' : 'Select'}
+          </button>
+        )}
+        <div className="flex gap-2 overflow-x-auto pb-1 flex-1">
           {['All', 'Active', 'Pending', 'Shelved', 'Done'].map(status => (
             <button key={status} onClick={() => setFilter(status)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
@@ -214,13 +228,12 @@ export function ProjectList({ projects, canManage, clients = [] }: { projects: P
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map(project => (
             <div key={project.id}
-              onClick={() => canManage ? toggleSelect(project.id) : router.push(`/projects/${project.id}`)}
-              onDoubleClick={() => router.push(`/projects/${project.id}`)}
+              onClick={() => selectMode ? toggleSelect(project.id) : router.push(`/projects/${project.id}`)}
               className={`glass p-6 rounded-2xl border-border/50 flex flex-col group relative overflow-hidden cursor-pointer
                 transition-all duration-200
                 hover:shadow-[0_0_32px_4px_hsl(var(--primary)/0.18)] hover:border-primary/40 hover:-translate-y-0.5
                 ${selectClass(project.id)}`}
-              title={canManage ? 'Click to select · Double-click to open' : 'Click to open'}
+              title={selectMode ? 'Click to select' : 'Click to open'}
             >
               {selected.has(project.id) && (
                 <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow">
@@ -264,7 +277,7 @@ export function ProjectList({ projects, canManage, clients = [] }: { projects: P
           <table className="w-full text-sm">
             <thead className="border-b border-border/50 bg-muted/20">
               <tr>
-                {canManage && <th className="w-10 px-4 py-3" />}
+                {canManage && selectMode && <th className="w-10 px-4 py-3" />}
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Project</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Client</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Type</th>
@@ -277,7 +290,7 @@ export function ProjectList({ projects, canManage, clients = [] }: { projects: P
               {filteredProjects.map((project, i) => (
                 <tr key={project.id}
                   className={`border-b border-border/30 last:border-0 group ${i % 2 === 0 ? '' : 'bg-muted/5'} ${selected.has(project.id) ? 'bg-primary/5' : ''}`}>
-                  {canManage && (
+                  {canManage && selectMode && (
                     <td className="px-4 py-3">
                       <button onClick={() => toggleSelect(project.id)}
                         className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${selected.has(project.id) ? 'bg-primary border-primary' : 'border-border hover:border-primary/60'}`}>
@@ -318,7 +331,7 @@ export function ProjectList({ projects, canManage, clients = [] }: { projects: P
           {filteredProjects.map(project => (
             <div key={project.id}
               className={`flex items-center gap-3 px-4 py-2 group hover:bg-muted/10 transition-colors ${selected.has(project.id) ? 'bg-primary/5' : ''}`}>
-              {canManage && (
+              {canManage && selectMode && (
                 <button onClick={() => toggleSelect(project.id)}
                   className={`w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center transition-colors ${selected.has(project.id) ? 'bg-primary border-primary' : 'border-border hover:border-primary/60'}`}>
                   {selected.has(project.id) && <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
@@ -353,7 +366,7 @@ export function ProjectList({ projects, canManage, clients = [] }: { projects: P
       )}
       {canManage && filteredProjects.length > 0 && (
         <p className="text-xs text-muted-foreground mt-3">
-          {view === 'card' ? 'Click card to select · Double-click to open' : 'Use checkboxes to select'}
+          {selectMode ? 'Click to select · Exit Select when done' : 'Click card to open · Use Select button to multi-select'}
           {selected.size > 0 && <> · <button onClick={deselectAll} className="text-primary hover:underline">Deselect all ({selected.size})</button></>}
         </p>
       )}
