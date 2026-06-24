@@ -5,9 +5,9 @@ import { isRedirectError } from 'next/dist/client/components/redirect-error'
 import { createClient } from '@/utils/supabase/server'
 
 export async function resetPassword(formData: FormData) {
+  const email = formData.get('email') as string
   try {
     const supabase = await createClient()
-    const email = formData.get('email') as string
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kjss-web-app.vercel.app'
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
