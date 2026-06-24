@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Header from '@/components/header'
+import Link from 'next/link'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -42,9 +43,9 @@ export default async function DashboardPage() {
               You have full access to manage clients, projects, and users.
             </p>
             <div className="flex gap-4">
-              <button className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium text-sm hover:bg-primary/90 transition-colors">
-                Register New User
-              </button>
+              <Link href="/admin" className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium text-sm hover:bg-primary/90 transition-colors">
+                Manage Members
+              </Link>
             </div>
           </div>
         )}

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { TextPad } from './text-pad'
 import { ExcelGrid } from './excel-grid'
 import { ProjectLinks } from './project-links'
+import { GuestToggle } from './guest-toggle'
 
 export default async function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
@@ -70,7 +71,9 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
     .eq('id', user.id)
     .single()
   
-  const canManage = profile?.role === 'admin' || profile?.role === 'contractor'
+  const role = profile?.role
+  const canManage = role === 'admin' || role === 'project_manager'
+  const isAdmin = role === 'admin'
 
   if (!project) {
     return (
@@ -111,8 +114,13 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
                 <span>{project.type}</span>
               </div>
             </div>
-            <div className={`px-3 py-1 rounded-full text-sm font-semibold border ${statusColors[project.status as keyof typeof statusColors]}`}>
-              {project.status}
+            <div className="flex items-center gap-3">
+              {isAdmin && (
+                <GuestToggle projectId={project.id} guestViewable={project.guest_viewable ?? false} />
+              )}
+              <div className={`px-3 py-1 rounded-full text-sm font-semibold border ${statusColors[project.status as keyof typeof statusColors]}`}>
+                {project.status}
+              </div>
             </div>
           </div>
         </div>

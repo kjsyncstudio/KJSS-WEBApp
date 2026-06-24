@@ -34,6 +34,9 @@ export default async function Header() {
               <Link href="/dashboard" className="hover:text-foreground transition-colors">Dashboard</Link>
               <Link href="/clients" className="hover:text-foreground transition-colors">Clients</Link>
               <Link href="/projects" className="hover:text-foreground transition-colors">Projects</Link>
+              {role === 'admin' && (
+                <Link href="/admin" className="hover:text-foreground transition-colors">Admin</Link>
+              )}
             </nav>
           )}
         </div>
@@ -41,7 +44,7 @@ export default async function Header() {
         <div className="flex items-center gap-4">
           {user && (
             <span className="text-sm text-muted-foreground bg-secondary/50 px-3 py-1 rounded-full border border-border">
-              Role: <strong className="text-foreground capitalize">{role}</strong>
+              Role: <strong className="text-foreground">{role === 'project_manager' ? 'Project Manager' : role.charAt(0).toUpperCase() + role.slice(1)}</strong>
             </span>
           )}
           <ThemeToggle />
