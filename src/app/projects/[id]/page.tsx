@@ -133,9 +133,9 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
         />
 
         <div className="glass p-8 rounded-2xl border-border/50 mb-8">
-          <h3 className="text-lg font-semibold mb-2">Description</h3>
+          {project.description && <h3 className="text-lg font-semibold mb-2">Description</h3>}
           <p className="text-muted-foreground whitespace-pre-wrap">
-            {project.description || 'No description provided.'}
+            {project.description || 'insert description'}
           </p>
         </div>
 

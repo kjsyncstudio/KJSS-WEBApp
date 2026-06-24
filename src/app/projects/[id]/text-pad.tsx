@@ -25,7 +25,7 @@ export function TextPad({ projectId, initialContent, canManage }: { projectId: s
   return (
     <div className="glass rounded-2xl border-border/50 flex flex-col overflow-hidden mb-8">
       <div className="bg-secondary/50 px-4 py-3 border-b border-border/50 flex justify-between items-center">
-        <h3 className="font-semibold text-sm">Project Notes (Text Pad)</h3>
+        <h3 className="font-semibold text-sm">Project Notes</h3>
         <span className="text-xs text-muted-foreground">
           {isSaving ? 'Saving...' : 'All changes saved locally'}
         </span>

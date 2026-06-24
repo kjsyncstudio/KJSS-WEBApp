@@ -97,7 +97,7 @@ export function ExcelGrid({
   return (
     <div className="glass rounded-2xl border-border/50 flex flex-col overflow-hidden mb-8">
       <div className="bg-secondary/50 px-4 py-3 border-b border-border/50 flex justify-between items-center">
-        <h3 className="font-semibold text-sm">Project Sheet (Excel-like)</h3>
+        <h3 className="font-semibold text-sm">Project Sheet</h3>
         {canManage && (
           <div className="flex gap-2">
             <button 

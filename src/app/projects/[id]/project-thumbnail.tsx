@@ -25,14 +25,13 @@ export function ProjectThumbnail({
 
   return (
     <div className="glass p-6 rounded-2xl border-border/50 mb-6">
-      <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Thumbnail</h3>
       {canManage ? (
         <ImageUploader
           folder="project-thumbnails"
           currentUrl={url}
           onUploaded={handleUploaded}
           shape="wide"
-          placeholder="Upload project thumbnail"
+          placeholder="Upload Thumbnail"
         />
       ) : url ? (
         <img src={url} alt="Project thumbnail" className="w-full h-48 object-cover rounded-xl" />
