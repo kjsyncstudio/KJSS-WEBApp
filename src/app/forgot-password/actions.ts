@@ -21,6 +21,7 @@ export async function resetPassword(formData: FormData) {
     redirect('/forgot-password?sent=true')
   } catch (err) {
     if (isRedirectError(err)) throw err
-    redirect('/forgot-password?error=true')
+    const msg = err instanceof Error ? err.message : String(err)
+    redirect(`/forgot-password?error=true&msg=${encodeURIComponent(msg)}`)
   }
 }
