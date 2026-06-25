@@ -81,6 +81,7 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
   const [selectMode, setSelectMode] = useState(false)
   const [hideCompleted, setHideCompleted] = useState(true)
   const [clientFilter, setClientFilter] = useState<string>('all')
+  const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<'date' | 'name'>('date')
   const [sortAsc, setSortAsc] = useState(false) // default: latest first
   function flipSort(key: 'date' | 'name') {
@@ -108,6 +109,14 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
   let working = filter === 'All' ? projects : projects.filter(p => p.status === filter)
   if (hideCompleted) working = working.filter(p => !isCompleted(p.status))
   if (clientFilter !== 'all') working = working.filter(p => p.client_id === clientFilter)
+  if (search.trim()) {
+    const q = search.toLowerCase()
+    working = working.filter(p =>
+      p.title.toLowerCase().includes(q) ||
+      (p.clients?.name ?? '').toLowerCase().includes(q) ||
+      (p.description ?? '').toLowerCase().includes(q) ||
+      p.type.toLowerCase().includes(q))
+  }
   const filteredProjects = [...working].sort((a, b) => {
     let r = 0
     if (sortKey === 'name') r = a.title.localeCompare(b.title)
@@ -224,6 +233,14 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
           )}
         </div>
       )}
+
+      {/* Search */}
+      <div className="relative mb-4">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search projects…"
+          className="w-full bg-secondary/40 border border-border rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+        {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-sm">✕</button>}
+      </div>
 
       {/* Contractor client filter — single select */}
       {clientButtons.length > 1 && (

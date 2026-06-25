@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Make `dark:` utilities follow the .dark class (next-themes), not the OS setting */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #e7e9f0; /* soft, easy light mode — bright but not glaring white */
   --foreground: #1e293b; /* slate 800 — softer than pure-black */

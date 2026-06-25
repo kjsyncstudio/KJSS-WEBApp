@@ -54,6 +54,7 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
   const [view, setView] = useState<ViewMode>('card')
   const [sortKey, setSortKey] = useState<'name' | 'industry' | 'years'>('name')
   const [sortAsc, setSortAsc] = useState(true)
+  const [search, setSearch] = useState('')
 
   function selectSort(key: 'name' | 'industry' | 'years') {
     if (key !== sortKey) { setSortKey(key); setSortAsc(true) }
@@ -63,7 +64,13 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
     else { setSortKey(key); setSortAsc(true) }
   }
 
-  const sorted = [...clients].sort((a, b) => {
+  const filtered = search.trim()
+    ? clients.filter(c => {
+        const q = search.toLowerCase()
+        return c.name.toLowerCase().includes(q) || c.industry.toLowerCase().includes(q)
+      })
+    : clients
+  const sorted = [...filtered].sort((a, b) => {
     let r = 0
     if (sortKey === 'name') r = a.name.localeCompare(b.name)
     else if (sortKey === 'industry') r = a.industry.localeCompare(b.industry)
@@ -141,6 +148,14 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
 
   return (
     <>
+      {/* Search */}
+      <div className="relative mb-4">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search clients…"
+          className="w-full bg-secondary/40 border border-border rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+        {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-sm">✕</button>}
+      </div>
+
       {/* Sort + view toggle */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-2">
