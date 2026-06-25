@@ -4,6 +4,7 @@ import { deleteProject, updateProjectStatus, bulkDeleteProjects, bulkUpdateProje
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { StatusPills } from './status-pills'
+import { BatchEditModal } from './batch-edit-modal'
 
 type Project = {
   id: string
@@ -118,7 +119,11 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
     return () => document.removeEventListener('click', close)
   }, [])
 
+  const [showBatchEdit, setShowBatchEdit] = useState(false)
+
   function onRowContext(e: React.MouseEvent, p: Project) {
+    // In select mode with a selection, admins get the Batch Edit menu
+    if (selectMode && isAdmin && selected.size > 0) { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, id: p.id }); return }
     if (!canEdit(p)) return
     e.preventDefault()
     setContextMenu({ x: e.clientX, y: e.clientY, id: p.id })
@@ -525,16 +530,34 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
       {contextMenu && (() => {
         const p = projects.find(x => x.id === contextMenu.id)
         if (!p) return null
+        const batchMode = selectMode && isAdmin && selected.size > 0
         return (
-          <div className="fixed z-[60] bg-card border border-border rounded-md shadow-xl py-1 min-w-[150px] animate-in fade-in zoom-in-95"
+          <div className="fixed z-[60] bg-card border border-border rounded-md shadow-xl py-1 min-w-[160px] animate-in fade-in zoom-in-95"
             style={{ top: contextMenu.y, left: contextMenu.x }} onClick={e => e.stopPropagation()}>
-            <button onClick={() => { router.push(`/projects/${p.id}`); setContextMenu(null) }}
-              className="w-full text-left px-4 py-2 text-sm hover:bg-secondary transition-colors">Open</button>
-            <button onClick={() => startEditTitle(p)}
-              className="w-full text-left px-4 py-2 text-sm hover:bg-secondary transition-colors">Edit title</button>
+            {batchMode ? (
+              <button onClick={() => { setShowBatchEdit(true); setContextMenu(null) }}
+                className="w-full text-left px-4 py-2 text-sm hover:bg-secondary transition-colors">Batch Edit ({selected.size})</button>
+            ) : (
+              <>
+                <button onClick={() => { router.push(`/projects/${p.id}`); setContextMenu(null) }}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-secondary transition-colors">Open</button>
+                <button onClick={() => startEditTitle(p)}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-secondary transition-colors">Edit title</button>
+              </>
+            )}
           </div>
         )
       })()}
+
+      {showBatchEdit && (
+        <BatchEditModal
+          ids={[...selected]}
+          clients={clients}
+          types={typeOpts}
+          onClose={() => setShowBatchEdit(false)}
+          onDone={() => { setShowBatchEdit(false); exitSelectMode(); router.refresh() }}
+        />
+      )}
     </div>
   )
 }

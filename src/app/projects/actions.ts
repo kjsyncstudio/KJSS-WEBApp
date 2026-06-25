@@ -93,6 +93,57 @@ export async function updateProjectTitle(id: string, title: string) {
   return { success: true }
 }
 
+function providerTitle(url: string): string {
+  try {
+    const h = new URL(url).hostname.replace(/^www\./, '')
+    if (/drive\.google|docs\.google/.test(h)) return 'Google Drive'
+    if (/dropbox/.test(h)) return 'Dropbox'
+    if (/youtube|youtu\.be/.test(h)) return 'YouTube'
+    if (/wetransfer/.test(h)) return 'WeTransfer'
+    return h
+  } catch { return 'Link' }
+}
+
+// Batch edit selected projects. mode 'override' sets provided fields; 'empty' only fills blanks.
+export async function batchEditProjects(
+  ids: string[],
+  fields: { clientId?: string; date?: string; type?: string; link?: string },
+  mode: 'override' | 'empty',
+) {
+  if (ids.length === 0) return { error: 'Nothing selected.' }
+  const supabase = await createClient()
+
+  const { data: current } = await supabase.from('projects').select('id, title, project_date').in('id', ids)
+  const dateById: Record<string, string | null> = Object.fromEntries((current || []).map(p => [p.id, p.project_date]))
+  const titleById: Record<string, string> = Object.fromEntries((current || []).map(p => [p.id, p.title]))
+
+  let linkCounts: Record<string, number> = {}
+  if (fields.link && mode === 'empty') {
+    const { data: links } = await supabase.from('project_upload_links').select('project_id').in('project_id', ids)
+    for (const l of links || []) linkCounts[l.project_id] = (linkCounts[l.project_id] || 0) + 1
+  }
+
+  for (const id of ids) {
+    const upd: Record<string, unknown> = {}
+    if (mode === 'override') {
+      if (fields.type) upd.type = fields.type
+      if (fields.clientId) upd.client_id = fields.clientId
+      if (fields.date) upd.project_date = fields.date
+    } else {
+      if (fields.date && !dateById[id]) upd.project_date = fields.date  // type/client are never empty
+    }
+    if (Object.keys(upd).length) await supabase.from('projects').update(upd).eq('id', id)
+
+    if (fields.link && (mode === 'override' || !(linkCounts[id] > 0))) {
+      await supabase.from('project_upload_links').insert({ project_id: id, title: providerTitle(fields.link), url: fields.link })
+    }
+    await logAudit({ action: 'update', entity_type: 'project', entity_id: id, entity_name: titleById[id], metadata: { batch: true, mode, ...fields } })
+  }
+
+  revalidatePath('/projects')
+  return { success: true }
+}
+
 export async function updateProjectStatus(id: string, status: string) {
   const supabase = await createClient()
 
