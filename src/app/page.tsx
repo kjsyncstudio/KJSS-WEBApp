@@ -25,7 +25,11 @@ export default function Home() {
           Sign In
         </Link>
 
-        <p className="text-sm text-muted-foreground mt-4">
+        <Link href="/portfolio" className="text-sm text-primary hover:underline">
+          View our portfolio →
+        </Link>
+
+        <p className="text-sm text-muted-foreground mt-2">
           Contact an administrator to get an account.
         </p>
       </div>
