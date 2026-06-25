@@ -24,6 +24,7 @@ const DEFAULT_STATUSES = ['Pending', 'Active', 'Shelved', 'Done']
 
 const statusColors: Record<string, string> = {
   Active: 'bg-green-500/10 text-green-500 border-green-500/20',
+  Expedite: 'bg-amber-500/15 text-amber-600 border-amber-500/30',
   Done: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
   Shelved: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
   Pending: 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20',

@@ -13,7 +13,15 @@ type Project = {
   clients?: { name: string } | null
 }
 
-// Fast typewriter for sub-texts / descriptions
+type Change = {
+  id: string
+  user_email: string
+  entity_id: string | null
+  entity_name: string | null
+  created_at: string
+}
+
+// Fast typewriter for the welcome line only
 function Typewriter({ text, speed = 16, delay = 0, className }: { text: string; speed?: number; delay?: number; className?: string }) {
   const [out, setOut] = useState('')
   useEffect(() => {
@@ -33,19 +41,21 @@ function Typewriter({ text, speed = 16, delay = 0, className }: { text: string; 
 
 const statusColors: Record<string, string> = {
   Active: 'bg-green-500/10 text-green-500 border-green-500/20',
+  Expedite: 'bg-amber-500/15 text-amber-600 border-amber-500/30',
   Done: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
   Shelved: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
   Pending: 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20',
 }
+const badge = (s: string) => statusColors[s] ?? statusColors.Pending
 
 export function DashboardClient({
-  name, role, isAdmin, activeProjects, counts,
+  name, isAdmin, activeProjects, counts, recentChanges,
 }: {
   name: string
-  role: string
   isAdmin: boolean
   activeProjects: Project[]
   counts: { active: number; clients: number; pending: number }
+  recentChanges: Change[]
 }) {
   const router = useRouter()
 
@@ -58,7 +68,7 @@ export function DashboardClient({
   return (
     <>
       <div className="mb-8">
-        <h2 className="text-3xl font-bold tracking-tight dash-in" style={{ animationDelay: '0ms' }}>Welcome, {name}</h2>
+        <h2 className="text-3xl font-bold tracking-tight dash-in">Welcome, {name}</h2>
         <p className="text-muted-foreground mt-2 min-h-[1.5rem]">
           <Typewriter text="Here's an overview of your active work." delay={250} />
         </p>
@@ -85,7 +95,7 @@ export function DashboardClient({
         ))}
       </div>
 
-      {/* Active projects */}
+      {/* Active projects — compact list */}
       <div className="flex items-center justify-between mb-4 dash-in" style={{ animationDelay: '420ms' }}>
         <h3 className="text-xl font-semibold">Active Projects</h3>
         <Link href="/projects" className="text-sm text-primary hover:underline">View all →</Link>
@@ -96,26 +106,44 @@ export function DashboardClient({
           No active projects right now.
         </div>
       ) : (
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {activeProjects.map((p, i) => (
-            <button key={p.id} onClick={() => router.push(`/projects/${p.id}`)}
-              className="text-left glass p-5 rounded-2xl border-border/50 flex flex-col group cursor-pointer dash-in
-                transition-all duration-200 hover:shadow-[0_0_28px_2px_hsl(var(--primary)/0.16)] hover:border-primary/40 hover:-translate-y-0.5"
-              style={{ animationDelay: `${480 + i * 70}ms` }}>
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <h4 className="font-semibold leading-tight">{p.title}</h4>
-                <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusColors[p.status] ?? statusColors.Pending}`}>{p.status}</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-                <span className="font-medium text-foreground">{p.clients?.name ?? '—'}</span>
-                <span>•</span>
-                <span>{p.type}</span>
-              </div>
-              <p className="text-xs text-muted-foreground line-clamp-3 min-h-[1rem]">
-                <Typewriter text={p.description || 'No description.'} delay={600 + i * 70} speed={10} />
-              </p>
-            </button>
-          ))}
+        <div className="glass rounded-2xl border border-border/50 divide-y divide-border/30 overflow-hidden dash-in" style={{ animationDelay: '480ms' }}>
+          {activeProjects.map(p => {
+            const expedite = p.status === 'Expedite'
+            return (
+              <button key={p.id} onClick={() => router.push(`/projects/${p.id}`)}
+                className={`w-full text-left flex items-center gap-3 px-4 py-2.5 transition-colors ${expedite ? 'bg-amber-400/10 hover:bg-amber-400/15' : 'hover:bg-muted/10'}`}>
+                <span className="font-medium truncate flex-1 min-w-0">{p.title}</span>
+                <span className="text-xs text-muted-foreground hidden sm:block truncate max-w-[10rem]">{p.clients?.name ?? '—'}</span>
+                <span className="text-xs text-muted-foreground hidden md:block truncate max-w-[14rem]">{p.description || '—'}</span>
+                <span className="text-xs text-muted-foreground hidden lg:block">{p.type}</span>
+                <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badge(p.status)}`}>{p.status}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Recent changes — admin only */}
+      {isAdmin && (
+        <div className="mt-10 dash-in" style={{ animationDelay: '560ms' }}>
+          <h3 className="text-xl font-semibold mb-4">Recent Changes</h3>
+          {recentChanges.length === 0 ? (
+            <div className="glass p-6 rounded-2xl border-border/50 text-center text-sm text-muted-foreground">No recent changes.</div>
+          ) : (
+            <div className="glass rounded-2xl border border-border/50 divide-y divide-border/30">
+              {recentChanges.map(c => (
+                <div key={c.id} className="flex items-center gap-2 px-4 py-2 text-xs hover:bg-muted/10">
+                  <span className="text-muted-foreground tabular-nums whitespace-nowrap w-28 shrink-0">
+                    {new Date(c.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <span className="text-muted-foreground shrink-0">edited</span>
+                  <span className="font-medium truncate flex-1">{c.entity_name ?? '—'}</span>
+                  <span className="text-muted-foreground truncate hidden sm:block max-w-[12rem]">{c.user_email}</span>
+                  {c.entity_id && <Link href={`/projects/${c.entity_id}`} className="text-primary hover:underline shrink-0">view</Link>}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -23,9 +23,13 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
 
   const all = projects || []
-  const activeProjects = all.filter(p => p.status === 'Active').slice(0, 12)
+  // "In progress" = Active or Expedite; expedite sorted to the top
+  const inProgress = all.filter(p => p.status === 'Active' || p.status === 'Expedite')
+  const activeProjects = [...inProgress]
+    .sort((a, b) => (a.status === 'Expedite' ? -1 : 0) - (b.status === 'Expedite' ? -1 : 0))
+    .slice(0, 15)
   const counts = {
-    active: all.filter(p => p.status === 'Active').length,
+    active: inProgress.length,
     pending: all.filter(p => p.status === 'Pending').length,
     clients: 0,
   }
@@ -39,16 +43,28 @@ export default async function DashboardPage() {
     counts.clients = count ?? 0
   }
 
+  // Recent project changes — admin only (contractors have no admin/activity view)
+  let recentChanges: unknown[] = []
+  if (isAdmin) {
+    const { data } = await supabase
+      .from('audit_log')
+      .select('id, user_email, entity_id, entity_name, created_at')
+      .eq('entity_type', 'project').eq('action', 'update')
+      .order('created_at', { ascending: false })
+      .limit(6)
+    recentChanges = data || []
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
         <DashboardClient
           name={name}
-          role={role}
           isAdmin={isAdmin}
           activeProjects={activeProjects as never}
           counts={counts}
+          recentChanges={recentChanges as never}
         />
       </main>
     </div>
