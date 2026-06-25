@@ -37,7 +37,7 @@ export function LogoInput({
       <div className="flex items-center gap-2">
         <div className="w-10 h-10 shrink-0 rounded-full overflow-hidden bg-muted/30 border border-border flex items-center justify-center">
           {preview
-            ? <img src={preview} alt="" className="w-full h-full object-cover" />
+            ? <img src={preview} alt="" className="w-full h-full object-contain p-0.5" />
             : <span className="text-muted-foreground/40 text-lg">?</span>}
         </div>
         <input
