@@ -82,6 +82,17 @@ export async function bulkUpdateProjects(ids: string[], fields: { type?: string;
   return { success: true }
 }
 
+export async function updateProjectTitle(id: string, title: string) {
+  const supabase = await createClient()
+  const t = title.trim()
+  if (!t) return { error: 'Title required.' }
+  const { error } = await supabase.from('projects').update({ title: t }).eq('id', id)
+  if (error) return { error: error.message }
+  await logAudit({ action: 'update', entity_type: 'project', entity_id: id, entity_name: t, metadata: { field: 'title' } })
+  revalidatePath('/projects')
+  return { success: true }
+}
+
 export async function updateProjectStatus(id: string, status: string) {
   const supabase = await createClient()
 

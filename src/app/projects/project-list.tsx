@@ -1,6 +1,6 @@
 'use client'
 
-import { deleteProject, updateProjectStatus, bulkDeleteProjects, bulkUpdateProjects } from './actions'
+import { deleteProject, updateProjectStatus, bulkDeleteProjects, bulkUpdateProjects, updateProjectTitle } from './actions'
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { StatusPills } from './status-pills'
@@ -104,6 +104,39 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
   const [isPending, startTransition] = useTransition()
 
   function exitSelectMode() { setSelectMode(false); setSelected(new Set()) }
+
+  // Right-click context menu + inline title editing
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: string } | null>(null)
+  const [editTitleId, setEditTitleId] = useState<string | null>(null)
+  const [titleDraft, setTitleDraft] = useState('')
+  const [titleOverride, setTitleOverride] = useState<Record<string, string>>({})
+  const titleOf = (p: Project) => titleOverride[p.id] ?? p.title
+
+  useEffect(() => {
+    const close = () => setContextMenu(null)
+    document.addEventListener('click', close)
+    return () => document.removeEventListener('click', close)
+  }, [])
+
+  function onRowContext(e: React.MouseEvent, p: Project) {
+    if (!canEdit(p)) return
+    e.preventDefault()
+    setContextMenu({ x: e.clientX, y: e.clientY, id: p.id })
+  }
+  function startEditTitle(p: Project) { setEditTitleId(p.id); setTitleDraft(titleOf(p)); setContextMenu(null) }
+  function saveTitle(id: string) {
+    const v = titleDraft.trim()
+    setEditTitleId(null)
+    if (!v) return
+    setTitleOverride(o => ({ ...o, [id]: v }))
+    startTransition(() => { updateProjectTitle(id, v) })
+  }
+  const titleInput = (id: string) => (
+    <input autoFocus value={titleDraft} onClick={e => e.stopPropagation()} onChange={e => setTitleDraft(e.target.value)}
+      onBlur={() => saveTitle(id)}
+      onKeyDown={e => { if (e.key === 'Enter') saveTitle(id); if (e.key === 'Escape') setEditTitleId(null) }}
+      className="bg-background border border-primary/50 rounded px-2 py-0.5 text-sm focus:outline-none w-full" />
+  )
 
   // Bulk edit state
   const [bulkType, setBulkType] = useState('')
@@ -338,7 +371,8 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map(project => (
             <div key={project.id}
-              onClick={() => selectMode ? toggleSelect(project.id) : router.push(`/projects/${project.id}`)}
+              onClick={() => { if (editTitleId !== project.id) selectMode ? toggleSelect(project.id) : router.push(`/projects/${project.id}`) }}
+              onContextMenu={e => onRowContext(e, project)}
               className={`glass p-6 rounded-2xl border-border/50 flex flex-col group relative overflow-hidden cursor-pointer
                 transition-all duration-200
                 hover:shadow-[0_0_32px_4px_hsl(var(--primary)/0.18)] hover:border-primary/40 hover:-translate-y-0.5
@@ -353,7 +387,7 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="font-semibold text-xl leading-tight mb-1 group-hover:text-primary transition-colors pr-6">
-                    {project.title}
+                    {editTitleId === project.id ? titleInput(project.id) : titleOf(project)}
                   </h3>
                   <div className="text-sm text-muted-foreground flex items-center gap-2">
                     <span>{project.clients?.name || 'Unknown'}</span>
@@ -388,10 +422,10 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
             <thead className="border-b border-border/50 bg-muted/20">
               <tr>
                 {canManage && selectMode && <th className="w-10 px-4 py-3" />}
-                <th className="text-left px-5 py-3 font-medium text-muted-foreground">Project</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Client</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Type</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Client</th>
+                <th className="text-left px-5 py-3 font-medium text-muted-foreground">Project</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Type</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground w-48">Description</th>
                 <th className="px-4 py-3 w-16" />
               </tr>
@@ -399,6 +433,7 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
             <tbody>
               {filteredProjects.map((project, i) => (
                 <tr key={project.id}
+                  onContextMenu={e => onRowContext(e, project)}
                   className={`border-b border-border/30 last:border-0 group ${i % 2 === 0 ? '' : 'bg-muted/5'} ${selected.has(project.id) ? 'bg-primary/5' : ''}`}>
                   {canManage && selectMode && (
                     <td className="px-4 py-3">
@@ -408,19 +443,21 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
                       </button>
                     </td>
                   )}
-                  <td className="px-5 py-3 font-medium">
-                    <span onClick={() => router.push(`/projects/${project.id}`)} className="hover:text-primary cursor-pointer transition-colors">
-                      {project.title}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{project.clients?.name || '—'}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{project.type}</td>
                   <td className="px-4 py-3">
                     {canEdit(project)
                       ? <div onClick={e => e.stopPropagation()}><StatusSelect project={project} /></div>
                       : <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${statusBadge(project.status)}`}>{project.status}</span>
                     }
                   </td>
+                  <td className="px-4 py-3 text-muted-foreground">{project.clients?.name || '—'}</td>
+                  <td className="px-5 py-3 font-medium">
+                    {editTitleId === project.id ? titleInput(project.id) : (
+                      <span onClick={() => router.push(`/projects/${project.id}`)} className="hover:text-primary cursor-pointer transition-colors">
+                        {titleOf(project)}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{project.type}</td>
                   <td className="px-4 py-3 text-muted-foreground text-xs max-w-[12rem] truncate">{project.description || '—'}</td>
                   <td className="px-4 py-3 text-right">
                     {canEdit(project) && (
@@ -440,6 +477,7 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
         <div className="glass rounded-2xl border border-border/50 overflow-hidden divide-y divide-border/30">
           {filteredProjects.map(project => (
             <div key={project.id}
+              onContextMenu={e => onRowContext(e, project)}
               className={`flex items-center gap-3 px-4 py-2 group hover:bg-muted/10 transition-colors ${selected.has(project.id) ? 'bg-primary/5' : ''}`}>
               {canManage && selectMode && (
                 <button onClick={() => toggleSelect(project.id)}
@@ -451,11 +489,13 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
                 project.status === 'Active' ? 'bg-green-500' :
                 project.status === 'Expedite' ? 'bg-amber-500' :
                 /complete|done/i.test(project.status) ? 'bg-blue-500' : 'bg-zinc-400'}`} />
-              <span onClick={() => router.push(`/projects/${project.id}`)}
-                className="font-medium text-sm hover:text-primary cursor-pointer transition-colors flex-1 truncate">
-                {project.title}
-              </span>
-              <span className="text-xs text-muted-foreground hidden sm:block truncate max-w-[8rem]">{project.clients?.name}</span>
+              <span className="text-xs text-muted-foreground hidden sm:block truncate max-w-[8rem] shrink-0">{project.clients?.name}</span>
+              {editTitleId === project.id ? <div className="flex-1">{titleInput(project.id)}</div> : (
+                <span onClick={() => router.push(`/projects/${project.id}`)}
+                  className="font-medium text-sm hover:text-primary cursor-pointer transition-colors flex-1 truncate">
+                  {titleOf(project)}
+                </span>
+              )}
               <span className="text-xs text-muted-foreground hidden md:block">{project.type}</span>
               {canEdit(project)
                 ? <div onClick={e => e.stopPropagation()}><StatusSelect project={project} /></div>
@@ -476,10 +516,25 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
       )}
       {canManage && filteredProjects.length > 0 && (
         <p className="text-xs text-muted-foreground mt-3">
-          {selectMode ? 'Click to select · Exit Select when done' : 'Click card to open · Use Select button to multi-select'}
+          {selectMode ? 'Click to select · Exit Select when done' : 'Click to open · Right-click to edit title'}
           {selected.size > 0 && <> · <button onClick={deselectAll} className="text-primary hover:underline">Deselect all ({selected.size})</button></>}
         </p>
       )}
+
+      {/* Right-click context menu */}
+      {contextMenu && (() => {
+        const p = projects.find(x => x.id === contextMenu.id)
+        if (!p) return null
+        return (
+          <div className="fixed z-[60] bg-card border border-border rounded-md shadow-xl py-1 min-w-[150px] animate-in fade-in zoom-in-95"
+            style={{ top: contextMenu.y, left: contextMenu.x }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => { router.push(`/projects/${p.id}`); setContextMenu(null) }}
+              className="w-full text-left px-4 py-2 text-sm hover:bg-secondary transition-colors">Open</button>
+            <button onClick={() => startEditTitle(p)}
+              className="w-full text-left px-4 py-2 text-sm hover:bg-secondary transition-colors">Edit title</button>
+          </div>
+        )
+      })()}
     </div>
   )
 }
