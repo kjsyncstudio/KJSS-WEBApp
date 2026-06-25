@@ -11,6 +11,7 @@ import { ProjectDescription } from './project-description'
 import { ProjectLiveProvider } from './project-live'
 import { ProjectHeader } from './project-header'
 import { UndoProvider } from './undo-provider'
+import { ProjectMedia } from './project-media'
 
 export default async function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
@@ -69,6 +70,10 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
     .select('*')
     .eq('project_id', id)
     .order('created_at')
+
+  // Gallery media (images + video links)
+  const { data: media } = await supabase
+    .from('project_media').select('id, kind, url, sort').eq('project_id', id).order('sort')
 
   // Editable project types
   const { data: typeSettings } = await supabase.from('project_settings').select('value').eq('kind', 'type').order('sort')
@@ -160,6 +165,12 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
           <ProjectDescription
             projectId={project.id}
             initial={project.description || ''}
+            canManage={canManage}
+          />
+
+          <ProjectMedia
+            projectId={project.id}
+            media={(media as never) || []}
             canManage={canManage}
           />
 
