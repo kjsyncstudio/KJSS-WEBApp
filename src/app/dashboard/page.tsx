@@ -34,6 +34,10 @@ export default async function DashboardPage() {
     clients: 0,
   }
 
+  // Status breakdown across all visible projects
+  const statusCounts: Record<string, number> = {}
+  for (const p of all) statusCounts[p.status] = (statusCounts[p.status] || 0) + 1
+
   // Client count: admin = all clients; others = clients they can read
   if (isAdmin) {
     const { count } = await supabase.from('clients').select('id', { count: 'exact', head: true })
@@ -64,6 +68,7 @@ export default async function DashboardPage() {
           isAdmin={isAdmin}
           activeProjects={activeProjects as never}
           counts={counts}
+          statusCounts={statusCounts}
           recentChanges={recentChanges as never}
         />
       </main>

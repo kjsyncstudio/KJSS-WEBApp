@@ -48,22 +48,38 @@ const statusColors: Record<string, string> = {
 }
 const badge = (s: string) => statusColors[s] ?? statusColors.Pending
 
+const barColor: Record<string, string> = {
+  Active: 'bg-green-500', Expedite: 'bg-amber-500', Pending: 'bg-zinc-400', Shelved: 'bg-orange-500', Done: 'bg-blue-500',
+}
+const barOf = (s: string) => barColor[s] ?? 'bg-zinc-500'
+const STATUS_ORDER = ['Expedite', 'Active', 'Pending', 'Shelved', 'Done']
+
 export function DashboardClient({
-  name, isAdmin, activeProjects, counts, recentChanges,
+  name, isAdmin, activeProjects, counts, statusCounts, recentChanges,
 }: {
   name: string
   isAdmin: boolean
   activeProjects: Project[]
   counts: { active: number; clients: number; pending: number }
+  statusCounts: Record<string, number>
   recentChanges: Change[]
 }) {
   const router = useRouter()
+  const [showActions, setShowActions] = useState(false)
+  useEffect(() => { setShowActions(localStorage.getItem('dashQuickActions') === '1') }, [])
+  const toggleActions = () => setShowActions(v => { localStorage.setItem('dashQuickActions', v ? '0' : '1'); return !v })
 
   const stats = [
     { label: 'Active Projects', value: counts.active },
     { label: isAdmin ? 'Clients' : 'My Clients', value: counts.clients },
     { label: 'Pending', value: counts.pending },
   ]
+
+  // ordered status segments (known order first, then any custom statuses)
+  const total = Object.values(statusCounts).reduce((a, b) => a + b, 0)
+  const segments = [...STATUS_ORDER, ...Object.keys(statusCounts).filter(s => !STATUS_ORDER.includes(s))]
+    .filter(s => statusCounts[s] > 0)
+    .map(s => ({ status: s, count: statusCounts[s] }))
 
   return (
     <>
@@ -81,6 +97,46 @@ export function DashboardClient({
           <Link href="/admin" className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium text-sm hover:bg-primary/90 transition-colors">
             Manage Members
           </Link>
+        </div>
+      )}
+
+      {/* Quick actions — admin only, hidden by default */}
+      {isAdmin && (
+        <div className="mb-8 dash-in" style={{ animationDelay: '140ms' }}>
+          <button onClick={toggleActions}
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <span className={`transition-transform ${showActions ? 'rotate-90' : ''}`}>▸</span> Quick actions
+          </button>
+          {showActions && (
+            <div className="flex flex-wrap gap-3 mt-3">
+              <Link href="/projects" className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">+ New Project</Link>
+              <Link href="/projects/batch" className="border border-border px-4 py-2 rounded-md text-sm font-medium hover:bg-muted/50 transition-colors">Batch Add</Link>
+              <Link href="/clients" className="border border-border px-4 py-2 rounded-md text-sm font-medium hover:bg-muted/50 transition-colors">+ New Client</Link>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Status breakdown */}
+      {total > 0 && (
+        <div className="glass p-5 rounded-2xl border-border/50 mb-8 dash-in" style={{ animationDelay: '160ms' }}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-medium text-sm text-muted-foreground">Status Breakdown</h3>
+            <span className="text-xs text-muted-foreground">{total} project{total !== 1 ? 's' : ''}</span>
+          </div>
+          <div className="flex h-2.5 rounded-full overflow-hidden bg-muted/30">
+            {segments.map(s => (
+              <div key={s.status} className={barOf(s.status)} style={{ width: `${(s.count / total) * 100}%` }} title={`${s.status}: ${s.count}`} />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+            {segments.map(s => (
+              <span key={s.status} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className={`w-2.5 h-2.5 rounded-full ${barOf(s.status)}`} />
+                {s.status} <span className="tabular-nums font-medium text-foreground">{s.count}</span>
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
