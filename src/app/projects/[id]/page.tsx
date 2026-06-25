@@ -10,6 +10,7 @@ import { ProjectThumbnail } from './project-thumbnail'
 import { ProjectDescription } from './project-description'
 import { ProjectLiveProvider } from './project-live'
 import { ProjectHeader } from './project-header'
+import { UndoProvider } from './undo-provider'
 
 export default async function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
@@ -149,6 +150,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
         </div>
 
         <ProjectLiveProvider projectId={project.id} userEmail={user?.email ?? `Guest-${Math.random().toString(36).slice(2, 7)}`}>
+         <UndoProvider>
           <ProjectThumbnail
             projectId={project.id}
             thumbnailUrl={project.thumbnail_url ?? null}
@@ -185,6 +187,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
               />
             </>
           )}
+         </UndoProvider>
         </ProjectLiveProvider>
       </main>
     </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { saveTextPad } from './notes-actions'
 import { useProjectLive } from './project-live'
+import { useUndo } from './undo-provider'
 
 export function TextPad({ projectId, initialContent, canManage }: { projectId: string, initialContent: string, canManage: boolean }) {
   const [content, setContent] = useState(initialContent)
@@ -12,6 +13,7 @@ export function TextPad({ projectId, initialContent, canManage }: { projectId: s
   const ref = useRef<HTMLDivElement>(null)
 
   const live = useProjectLive()
+  const undo = useUndo()
   const lockedBy = live?.lockedByOther('notes') ?? null
 
   // Set the editor HTML imperatively (uncontrolled, to keep the cursor stable)
@@ -43,6 +45,8 @@ export function TextPad({ projectId, initialContent, canManage }: { projectId: s
   useEffect(() => {
     if (content === lastSaved || !canManage) return
     const timer = setTimeout(async () => {
+      const old = lastSaved
+      undo?.push({ label: 'notes', revert: () => { applyHtml(old); setContent(old); setLastSaved(old); saveTextPad(projectId, old) } })
       setIsSaving(true)
       await saveTextPad(projectId, content)
       setLastSaved(content)

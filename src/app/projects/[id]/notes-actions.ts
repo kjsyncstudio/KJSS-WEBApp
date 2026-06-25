@@ -64,6 +64,25 @@ export async function updateGridColumn(projectId: string, colIndex: number, head
   return { success: true }
 }
 
+export async function deleteGridRow(projectId: string, rowIndex: number) {
+  const supabase = await createClient()
+  // Remove the row's cells, then shift every row below it up by one
+  const { error: delErr } = await supabase.from('project_grid_cells').delete().eq('project_id', projectId).eq('row_index', rowIndex)
+  if (delErr) return { error: delErr.message }
+
+  const { data: below } = await supabase.from('project_grid_cells')
+    .select('row_index, col_index, value').eq('project_id', projectId).gt('row_index', rowIndex)
+  if (below && below.length) {
+    await supabase.from('project_grid_cells').delete().eq('project_id', projectId).gt('row_index', rowIndex)
+    await supabase.from('project_grid_cells').insert(
+      below.map(c => ({ project_id: projectId, row_index: c.row_index - 1, col_index: c.col_index, value: c.value }))
+    )
+  }
+  await logProjectChange(projectId, 'sheet')
+  revalidatePath(`/projects/${projectId}`)
+  return { success: true }
+}
+
 export async function saveGridCell(projectId: string, rowIndex: number, colIndex: number, value: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

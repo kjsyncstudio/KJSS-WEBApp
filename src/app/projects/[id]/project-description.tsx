@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { saveDescription } from './project-actions'
 import { useProjectLive } from './project-live'
+import { useUndo } from './undo-provider'
 
 export function ProjectDescription({
   projectId,
@@ -19,6 +20,7 @@ export function ProjectDescription({
   const taRef = useRef<HTMLTextAreaElement>(null)
 
   const live = useProjectLive()
+  const undo = useUndo()
   const lockedBy = live?.lockedByOther('description') ?? null
 
   useEffect(() => {
@@ -50,7 +52,11 @@ export function ProjectDescription({
   async function handleBlur() {
     setEditing(false)
     live?.unlock('description')
-    if (value !== saved) { await saveDescription(projectId, value); setSaved(value) }
+    if (value !== saved) {
+      const old = saved
+      undo?.push({ label: 'description', revert: () => { setValue(old); setSaved(old); saveDescription(projectId, old) } })
+      await saveDescription(projectId, value); setSaved(value)
+    }
   }
 
   return (

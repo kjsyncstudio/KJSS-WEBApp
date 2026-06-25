@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useTransition } from 'react'
 import { updateProjectField } from './project-actions'
+import { useUndo } from './undo-provider'
 
 export function ProjectHeader({
   projectId, title: initialTitle, type: initialType, projectDate: initialDate, clientName, canManage, types,
@@ -17,27 +18,45 @@ export function ProjectHeader({
   const [title, setTitle] = useState(initialTitle)
   const [type, setType] = useState(initialType)
   const [date, setDate] = useState(initialDate ?? '')
+  // last persisted values (for undo)
+  const [savedTitle, setSavedTitle] = useState(initialTitle)
+  const [savedType, setSavedType] = useState(initialType)
+  const [savedDate, setSavedDate] = useState(initialDate ?? '')
 
   const [editTitle, setEditTitle] = useState(false)
   const [editType, setEditType] = useState(false)
   const [editDate, setEditDate] = useState(false)
   const [, start] = useTransition()
+  const undo = useUndo()
 
   const titleRef = useRef<HTMLInputElement>(null)
   useEffect(() => { if (editTitle) titleRef.current?.focus() }, [editTitle])
 
   function saveTitle() {
     setEditTitle(false)
-    if (title.trim() && title !== initialTitle) start(() => { updateProjectField(projectId, 'title', title.trim()) })
-    else if (!title.trim()) setTitle(initialTitle)
+    const v = title.trim()
+    if (!v) { setTitle(savedTitle); return }
+    if (v !== savedTitle) {
+      const old = savedTitle
+      undo?.push({ label: 'title', revert: () => { setTitle(old); setSavedTitle(old); updateProjectField(projectId, 'title', old) } })
+      setSavedTitle(v); start(() => { updateProjectField(projectId, 'title', v) })
+    }
   }
   function saveType(v: string) {
     setType(v); setEditType(false)
-    if (v !== initialType) start(() => { updateProjectField(projectId, 'type', v) })
+    if (v !== savedType) {
+      const old = savedType
+      undo?.push({ label: 'type', revert: () => { setType(old); setSavedType(old); updateProjectField(projectId, 'type', old) } })
+      setSavedType(v); start(() => { updateProjectField(projectId, 'type', v) })
+    }
   }
   function saveDate() {
     setEditDate(false)
-    if (date !== (initialDate ?? '')) start(() => { updateProjectField(projectId, 'project_date', date || null) })
+    if (date !== savedDate) {
+      const old = savedDate
+      undo?.push({ label: 'date', revert: () => { setDate(old); setSavedDate(old); updateProjectField(projectId, 'project_date', old || null) } })
+      setSavedDate(date); start(() => { updateProjectField(projectId, 'project_date', date || null) })
+    }
   }
 
   const fmtDate = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
