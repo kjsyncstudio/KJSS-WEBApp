@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { logProjectChange } from '@/utils/audit'
 
 export async function saveTextPad(projectId: string, content: string) {
   const supabase = await createClient()
@@ -22,6 +23,7 @@ export async function saveTextPad(projectId: string, content: string) {
     })
   }
 
+  await logProjectChange(projectId, undefined, 'notes')
   revalidatePath(`/projects/${projectId}`)
   return { success: true }
 }
@@ -57,6 +59,7 @@ export async function updateGridColumn(projectId: string, colIndex: number, head
     return { error: error.message }
   }
 
+  await logProjectChange(projectId, undefined, 'sheet')
   revalidatePath(`/projects/${projectId}`)
   return { success: true }
 }
@@ -79,6 +82,7 @@ export async function saveGridCell(projectId: string, rowIndex: number, colIndex
     return { error: error.message }
   }
 
+  await logProjectChange(projectId, undefined, 'sheet')
   revalidatePath(`/projects/${projectId}`)
   return { success: true }
 }
