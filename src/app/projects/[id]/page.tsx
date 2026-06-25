@@ -18,13 +18,9 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) {
-    redirect('/login')
-  }
-
   const { id } = await params
 
-  // Fetch the project details
+  // Fetch the project details (RLS lets anon read only guest-viewable projects)
   const { data: project } = await supabase
     .from('projects')
     .select(`
@@ -33,6 +29,11 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
     `)
     .eq('id', id)
     .single()
+
+  // Anonymous visitors: allow only guest-viewable projects, otherwise send to login
+  if (!user && !project?.guest_viewable) {
+    redirect('/login')
+  }
 
   // Fetch Notes (Text Pad)
   const { data: textNote } = await supabase
@@ -72,26 +73,22 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
   const { data: typeSettings } = await supabase.from('project_settings').select('value').eq('kind', 'type').order('sort')
   const types = (typeSettings || []).map(s => s.value)
 
-  // Fetch Role
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-  
-  const role = profile?.role
-  const isAdmin = role === 'admin'
-
-  // Edit right: admin always; others need write permission on this project's client
-  let canManage = isAdmin
-  if (!isAdmin && project?.client_id) {
-    const { data: perm } = await supabase
-      .from('client_permissions')
-      .select('can_write')
-      .eq('user_id', user.id)
-      .eq('client_id', project.client_id)
-      .maybeSingle()
-    canManage = !!perm?.can_write
+  // Fetch role only for signed-in users; anonymous guests are always read-only
+  let isAdmin = false
+  let canManage = false
+  if (user) {
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    isAdmin = profile?.role === 'admin'
+    canManage = isAdmin
+    if (!isAdmin && project?.client_id) {
+      const { data: perm } = await supabase
+        .from('client_permissions')
+        .select('can_write')
+        .eq('user_id', user.id)
+        .eq('client_id', project.client_id)
+        .maybeSingle()
+      canManage = !!perm?.can_write
+    }
   }
 
   if (!project) {
@@ -146,7 +143,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
           </div>
         </div>
 
-        <ProjectLiveProvider projectId={project.id} userEmail={user.email ?? user.id}>
+        <ProjectLiveProvider projectId={project.id} userEmail={user?.email ?? `Guest-${Math.random().toString(36).slice(2, 7)}`}>
           <ProjectThumbnail
             projectId={project.id}
             thumbnailUrl={project.thumbnail_url ?? null}
