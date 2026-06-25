@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f0f4f8; /* Bright futuristic light mode */
-  --foreground: #0f172a; /* Slate 900 for high contrast text */
-  --primary: #0ea5e9; /* Sky 500 for vibrant accents */
+  --background: #e7e9f0; /* soft, easy light mode — bright but not glaring white */
+  --foreground: #1e293b; /* slate 800 — softer than pure-black */
+  --primary: #0284c7; /* sky 600 for accessible accents on lighter bg */
   --primary-foreground: #ffffff;
-  --accent: #8b5cf6; /* Violet 500 for secondary accents */
+  --accent: #7c5cf0; /* violet */
   --accent-foreground: #ffffff;
-  --muted: #e2e8f0;
-  --muted-foreground: #64748b;
-  --border: #cbd5e1;
-  --card: #ffffff;
-  --card-foreground: #0f172a;
+  --muted: #d9dde7;
+  --muted-foreground: #5a6473;
+  --border: #c3c9d6;
+  --card: #f5f6fa; /* off-white card, not pure white */
+  --card-foreground: #1e293b;
   --radius: 0.75rem;
 }
 
@@ -53,21 +53,21 @@
 /* Base styles */
 * {
   border-color: var(--border);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Glassmorphism utilities */
+/* Glassmorphism utilities — softer tint in light mode */
 .glass {
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.55);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .dark .glass {
