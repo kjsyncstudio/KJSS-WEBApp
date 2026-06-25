@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Logo } from "@/components/logo";
 
 export default function Home() {
   return (
@@ -13,12 +14,10 @@ export default function Home() {
       </div>
 
       <div className="z-10 w-full max-w-md glass p-8 rounded-2xl shadow-2xl flex flex-col items-center text-center space-y-6">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
-          <span className="text-2xl font-bold text-white">KJS</span>
-        </div>
-        
+        <Logo className="w-28 h-28 object-contain" />
+
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome to Studio</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Sync Studios</h1>
           <p className="text-muted-foreground">Manage your projects and clients in real-time.</p>
         </div>
 

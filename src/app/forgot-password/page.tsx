@@ -1,6 +1,7 @@
 import { resetPassword } from './actions'
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { Logo } from '@/components/logo'
 
 export default async function ForgotPasswordPage({ searchParams }: { searchParams: Promise<{ error?: string; sent?: string; msg?: string; email?: string }> }) {
   const params = await searchParams
@@ -20,9 +21,7 @@ export default async function ForgotPasswordPage({ searchParams }: { searchParam
 
       <div className="z-10 w-full max-w-sm glass p-8 rounded-2xl shadow-2xl flex flex-col space-y-6 relative overflow-hidden border border-white/20 dark:border-white/10">
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg mb-4">
-            <span className="text-xl font-bold text-white">KJS</span>
-          </div>
+          <Logo className="w-20 h-20 mx-auto object-contain mb-2" />
           <h1 className="text-2xl font-bold tracking-tight">Reset Password</h1>
           <p className="text-sm text-muted-foreground">Enter your email to receive a reset link</p>
         </div>
