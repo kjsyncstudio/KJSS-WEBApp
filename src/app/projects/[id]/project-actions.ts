@@ -22,6 +22,15 @@ export async function saveDescription(projectId: string, description: string) {
   return { success: true }
 }
 
+export async function updateProjectField(projectId: string, field: 'title' | 'type' | 'project_date', value: string | null) {
+  const supabase = await createClient()
+  const { error } = await supabase.from('projects').update({ [field]: value || null }).eq('id', projectId)
+  if (error) return { error: error.message }
+  await logProjectChange(projectId, field === 'project_date' ? 'date' : field)
+  revalidatePath(`/projects/${projectId}`)
+  return { success: true }
+}
+
 export async function toggleGuestViewable(projectId: string, value: boolean) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

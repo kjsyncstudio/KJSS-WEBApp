@@ -9,6 +9,7 @@ import { GuestToggle } from './guest-toggle'
 import { ProjectThumbnail } from './project-thumbnail'
 import { ProjectDescription } from './project-description'
 import { ProjectLiveProvider } from './project-live'
+import { ProjectHeader } from './project-header'
 
 export default async function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
@@ -67,6 +68,10 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
     .eq('project_id', id)
     .order('created_at')
 
+  // Editable project types
+  const { data: typeSettings } = await supabase.from('project_settings').select('value').eq('kind', 'type').order('sort')
+  const types = (typeSettings || []).map(s => s.value)
+
   // Fetch Role
   const { data: profile } = await supabase
     .from('profiles')
@@ -121,14 +126,15 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
             ← Back to Projects
           </Link>
           <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight mb-2">{project.title}</h2>
-              <div className="flex items-center gap-3 text-muted-foreground">
-                <span className="font-medium text-foreground">{project.clients?.name}</span>
-                <span>•</span>
-                <span>{project.type}</span>
-              </div>
-            </div>
+            <ProjectHeader
+              projectId={project.id}
+              title={project.title}
+              type={project.type}
+              projectDate={project.project_date ?? null}
+              clientName={project.clients?.name ?? '—'}
+              canManage={canManage}
+              types={types}
+            />
             <div className="flex items-center gap-3">
               {isAdmin && (
                 <GuestToggle projectId={project.id} guestViewable={project.guest_viewable ?? false} />
@@ -153,13 +159,6 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
             canManage={canManage}
           />
 
-          <ProjectLinks
-            projectId={project.id}
-            uploadLinks={uploadLinks || []}
-            finalUrls={finalUrls || []}
-            canManage={canManage}
-          />
-
           <TextPad
             projectId={project.id}
             initialContent={textNote?.content || ''}
@@ -170,6 +169,13 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
             projectId={project.id}
             initialColumns={gridColumns || []}
             initialCells={gridCells || []}
+            canManage={canManage}
+          />
+
+          <ProjectLinks
+            projectId={project.id}
+            uploadLinks={uploadLinks || []}
+            finalUrls={finalUrls || []}
             canManage={canManage}
           />
         </ProjectLiveProvider>

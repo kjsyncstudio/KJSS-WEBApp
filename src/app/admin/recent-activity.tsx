@@ -16,7 +16,7 @@ type Entry = {
 
 const FIELD_LABELS: Record<string, string> = {
   notes: 'Notes', sheet: 'Sheet', description: 'Description', title: 'Title',
-  image: 'Image', link: 'Download link', finalurl: 'Final URL',
+  image: 'Image', link: 'Download link', finalurl: 'Final URL', type: 'Type', date: 'Date',
 }
 
 // Human description of what an audit entry represents

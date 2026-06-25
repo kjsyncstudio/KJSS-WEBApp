@@ -35,7 +35,7 @@ export function ProjectLinks({
       {/* Upload Links */}
       <div className="glass p-6 rounded-2xl border-border/50">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Upload Links</h3>
+          <h3 className="text-lg font-semibold">Download Links</h3>
           {canManage && !isAddingUpload && (
             <button onClick={() => setIsAddingUpload(true)} className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-md font-medium hover:bg-primary/20 transition-colors">
               + Add Link
