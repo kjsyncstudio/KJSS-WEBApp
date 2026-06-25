@@ -263,7 +263,7 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
       )}
 
       {/* Filters + view toggle */}
-      <div className="flex items-center justify-between mb-6 gap-4">
+      <div className="flex flex-wrap items-center mb-6 gap-2">
         {canManage && (
           <button
             onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
@@ -300,9 +300,12 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
       </div>
 
       {filteredProjects.length === 0 ? (
-        <div className="glass p-12 rounded-2xl border-border/50 text-center">
-          <h3 className="text-xl font-medium text-muted-foreground mb-2">No Projects Found</h3>
-          <p className="text-sm text-muted-foreground">{filter === 'All' ? 'No projects yet.' : `No ${filter} projects.`}</p>
+        <div className="glass p-12 rounded-2xl border-border/50 text-center flex flex-col items-center">
+          <svg className="text-muted-foreground/40 mb-3" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            {search ? <><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></> : <><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></>}
+          </svg>
+          <h3 className="text-lg font-medium mb-1">{search ? 'No matches' : 'No projects found'}</h3>
+          <p className="text-sm text-muted-foreground">{search ? `Nothing matches “${search}”.` : filter === 'All' ? 'No projects yet — add one to get started.' : `No ${filter} projects.`}</p>
         </div>
 
       ) : view === 'card' ? (

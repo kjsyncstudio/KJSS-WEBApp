@@ -125,7 +125,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
           <Link href="/projects" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 mb-4">
             ← Back to Projects
           </Link>
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <ProjectHeader
               projectId={project.id}
               title={project.title}

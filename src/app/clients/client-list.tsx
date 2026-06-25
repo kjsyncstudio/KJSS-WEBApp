@@ -180,7 +180,15 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
         </div>
       </div>
 
-      {view === 'card' && (
+      {sorted.length === 0 && (
+        <div className="glass p-12 rounded-2xl border-border/50 text-center flex flex-col items-center">
+          <svg className="text-muted-foreground/40 mb-3" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+          <h3 className="text-lg font-medium mb-1">No matches</h3>
+          <p className="text-sm text-muted-foreground">Nothing matches “{search}”.</p>
+        </div>
+      )}
+
+      {view === 'card' && sorted.length > 0 && (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {sorted.map((client) => (
           <div
@@ -224,7 +232,7 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
       </div>
       )}
 
-      {view === 'list' && (
+      {view === 'list' && sorted.length > 0 && (
         <div className="glass rounded-2xl border border-border/50 overflow-hidden">
           <table className="w-full text-sm">
             <thead className="border-b border-border/50 bg-muted/20">
@@ -263,7 +271,7 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
         </div>
       )}
 
-      {view === 'compact' && (
+      {view === 'compact' && sorted.length > 0 && (
         <div className="glass rounded-2xl border border-border/50 divide-y divide-border/30">
           {sorted.map((client) => (
             <div key={client.id} onContextMenu={(e) => handleContextMenu(e, client.id)}

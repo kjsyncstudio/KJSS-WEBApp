@@ -18,8 +18,8 @@ export default async function UpdatePasswordPage({ searchParams }: { searchParam
       <div className="z-10 w-full max-w-sm glass p-8 rounded-2xl shadow-2xl flex flex-col space-y-6 relative overflow-hidden border border-white/20 dark:border-white/10">
         <div className="text-center space-y-2">
           <Logo className="w-20 h-20 mx-auto object-contain mb-2" />
-          <h1 className="text-2xl font-bold tracking-tight">New Password</h1>
-          <p className="text-sm text-muted-foreground">Enter your new password below</p>
+          <h1 className="text-2xl font-bold tracking-tight">Set your password</h1>
+          <p className="text-sm text-muted-foreground">Choose a password to access your account</p>
         </div>
 
         <form className="flex flex-col space-y-4">
