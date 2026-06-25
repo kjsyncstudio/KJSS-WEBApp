@@ -33,7 +33,7 @@ export async function batchAddProjects(formData: FormData) {
     const projectDate = formData.get(`projectDate_${i}`) as string
     const thumbnailUrl = formData.get(`thumbnailUrl_${i}`) as string
     if (!title || !clientId || !type || !status) continue
-    inserts.push({ title, client_id: clientId, type, status, description, project_date: normalizeDate(projectDate), thumbnail_url: thumbnailUrl || null })
+    inserts.push({ title, client_id: clientId, type, status, description, project_date: normalizeDate(projectDate), thumbnail_url: thumbnailUrl || null, completed_at: /^(completed|done)$/i.test(status) ? new Date().toISOString() : null })
   }
 
   if (inserts.length === 0) return { error: 'No valid rows.' }

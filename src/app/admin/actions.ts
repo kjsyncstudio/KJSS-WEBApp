@@ -59,6 +59,16 @@ export async function updateUserRole(userId: string, newRole: string, userEmail:
   return { success: true }
 }
 
+export async function updateUserName(userId: string, fullName: string) {
+  await assertAdmin()
+  const adminClient = createAdminClient()
+  const { error } = await adminClient.from('profiles').update({ full_name: fullName }).eq('id', userId)
+  if (error) return { error: error.message }
+  await logAudit({ action: 'update', entity_type: 'user', entity_id: userId, metadata: { full_name: fullName } })
+  revalidatePath('/admin')
+  return { success: true }
+}
+
 export async function deleteUser(userId: string, userEmail: string) {
   await assertAdmin()
   const adminClient = createAdminClient()

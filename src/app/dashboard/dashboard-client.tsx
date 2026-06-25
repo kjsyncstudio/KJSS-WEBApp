@@ -52,6 +52,14 @@ const barColor: Record<string, string> = {
   Active: 'bg-green-500', Expedite: 'bg-amber-500', Pending: 'bg-zinc-400', Completed: 'bg-blue-500', Done: 'bg-blue-500',
 }
 const barOf = (s: string) => barColor[s] ?? 'bg-zinc-500'
+// gentle hover glow in the status colour
+const glowMap: Record<string, string> = {
+  Active: 'hover:bg-green-500/5 hover:shadow-[0_0_18px_-2px_rgba(34,197,94,0.4)]',
+  Expedite: 'hover:bg-amber-500/10 hover:shadow-[0_0_18px_-2px_rgba(245,158,11,0.45)]',
+  Completed: 'hover:bg-blue-500/5 hover:shadow-[0_0_18px_-2px_rgba(59,130,246,0.4)]',
+  Pending: 'hover:bg-zinc-500/5 hover:shadow-[0_0_18px_-2px_rgba(113,113,122,0.35)]',
+}
+const glowOf = (s: string) => glowMap[s] ?? 'hover:bg-muted/10'
 const STATUS_ORDER = ['Active', 'Pending', 'Expedite', 'Completed']
 
 export function DashboardClient({
@@ -167,7 +175,7 @@ export function DashboardClient({
             const expedite = p.status === 'Expedite'
             return (
               <button key={p.id} onClick={() => router.push(`/projects/${p.id}`)}
-                className={`w-full text-left flex items-center gap-3 px-4 py-2.5 transition-colors ${expedite ? 'bg-amber-400/10 hover:bg-amber-400/15' : 'hover:bg-muted/10'}`}>
+                className={`w-full text-left flex items-center gap-3 px-4 py-2.5 transition-all duration-200 hover:-translate-y-px relative z-0 hover:z-10 ${expedite ? 'bg-amber-400/10' : ''} ${glowOf(p.status)}`}>
                 <span className="font-medium truncate flex-1 min-w-0">{p.title}</span>
                 <span className="text-xs text-muted-foreground hidden sm:block truncate max-w-[10rem]">{p.clients?.name ?? '—'}</span>
                 <span className="text-xs text-muted-foreground hidden md:block truncate max-w-[14rem]">{p.description || '—'}</span>

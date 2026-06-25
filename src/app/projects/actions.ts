@@ -21,6 +21,7 @@ export async function addProject(formData: FormData) {
     status,
     description,
     project_date: /^\d{4}-\d{2}-\d{2}$/.test(projectDate || '') ? projectDate : null,
+    completed_at: /^(completed|done)$/i.test(status) ? new Date().toISOString() : null,
   }).select().single()
 
   if (error) {
@@ -85,7 +86,13 @@ export async function updateProjectStatus(id: string, status: string) {
   const supabase = await createClient()
 
   const { data: project } = await supabase.from('projects').select('title, status').eq('id', id).single()
-  const { error } = await supabase.from('projects').update({ status }).eq('id', id)
+  // Stamp completed_at when entering Completed, clear when leaving it
+  const isCompleted = /^(completed|done)$/i.test(status)
+  const wasCompleted = /^(completed|done)$/i.test(project?.status ?? '')
+  const patch: Record<string, unknown> = { status }
+  if (isCompleted && !wasCompleted) patch.completed_at = new Date().toISOString()
+  else if (!isCompleted && wasCompleted) patch.completed_at = null
+  const { error } = await supabase.from('projects').update(patch).eq('id', id)
 
   if (error) {
     console.error('Error updating project status:', error)

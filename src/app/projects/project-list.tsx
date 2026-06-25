@@ -14,6 +14,7 @@ type Project = {
   description: string | null
   project_date?: string | null
   created_at?: string
+  completed_at?: string | null
   clients?: { name: string }
 }
 
@@ -82,17 +83,21 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
   const [hideCompleted, setHideCompleted] = useState(true)
   const [clientFilter, setClientFilter] = useState<string>('all')
   const [search, setSearch] = useState('')
-  const [sortKey, setSortKey] = useState<'date' | 'name'>('date')
+  const [sortKey, setSortKey] = useState<'date' | 'name' | 'client'>('date')
   const [sortAsc, setSortAsc] = useState(false) // default: latest first
-  function flipSort(key: 'date' | 'name') {
+  function flipSort(key: 'date' | 'name' | 'client') {
     if (key === sortKey) setSortAsc(a => !a)
-    else { setSortKey(key); setSortAsc(key === 'name') }
+    else { setSortKey(key); setSortAsc(key !== 'date') }
   }
   // treat Done / Completed (any casing) as "completed"
   const isCompleted = (s: string) => /^(done|complete)/i.test(s)
   // contractor client filter buttons: distinct clients present in their visible projects
   const clientButtons = !isAdmin
     ? Array.from(new Map(projects.map(p => [p.client_id, p.clients?.name ?? '—'])).entries())
+    : []
+  // admin: clients that currently have active/pending/expedite work
+  const activeClientButtons = isAdmin
+    ? Array.from(new Map(projects.filter(p => !isCompleted(p.status)).map(p => [p.client_id, p.clients?.name ?? '—'])).entries())
     : []
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -117,14 +122,19 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
       (p.description ?? '').toLowerCase().includes(q) ||
       p.type.toLowerCase().includes(q))
   }
+  const dateOf = (p: Project) => p.project_date || p.created_at || ''
   const filteredProjects = [...working].sort((a, b) => {
+    // When completed are shown, surface them on top, latest-completed first
+    const ac = isCompleted(a.status), bc = isCompleted(b.status)
+    if (ac !== bc) return ac ? -1 : 1
+    if (ac && bc) return (b.completed_at || dateOf(b)).localeCompare(a.completed_at || dateOf(a))
+
     let r = 0
     if (sortKey === 'name') r = a.title.localeCompare(b.title)
-    else {
-      const da = a.project_date || a.created_at || ''
-      const db = b.project_date || b.created_at || ''
-      r = da.localeCompare(db)
-    }
+    else if (sortKey === 'client') {
+      r = (a.clients?.name ?? '').localeCompare(b.clients?.name ?? '')
+      if (r === 0) return dateOf(b).localeCompare(dateOf(a)) // tiebreak: latest first
+    } else r = dateOf(a).localeCompare(dateOf(b))
     return sortAsc ? r : -r
   })
 
@@ -242,6 +252,22 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
         {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-sm">✕</button>}
       </div>
 
+      {/* Admin: active-client filter — single select */}
+      {activeClientButtons.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 mb-4">
+          <button onClick={() => setClientFilter('all')}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${clientFilter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'}`}>
+            All clients
+          </button>
+          {activeClientButtons.map(([id, name]) => (
+            <button key={id} onClick={() => setClientFilter(id)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${clientFilter === id ? 'bg-primary text-primary-foreground' : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'}`}>
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Contractor client filter — single select */}
       {clientButtons.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-1 mb-4">
@@ -275,7 +301,7 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
           </button>
         )}
         <StatusPills options={['All', ...statusOpts]} active={filter} onSelect={setFilter} />
-        {([['date', 'Date'], ['name', 'Name']] as const).map(([key, label]) => (
+        {([['date', 'Date'], ['name', 'Name'], ['client', 'Client']] as const).map(([key, label]) => (
           <button key={key} onClick={() => flipSort(key)} title="Click to sort · click again to flip"
             className={`shrink-0 px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
               sortKey === key ? 'bg-primary/10 text-primary border-primary/30' : 'border-border hover:bg-muted/50'

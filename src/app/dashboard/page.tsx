@@ -17,16 +17,19 @@ export default async function DashboardPage() {
   // Projects — RLS auto-limits non-admins to their permitted clients
   const { data: projects } = await supabase
     .from('projects')
-    .select('id, title, type, status, description, clients ( name )')
+    .select('id, title, type, status, description, completed_at, clients ( name )')
     .is('deleted_at', null)
     .order('project_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
 
   const all = projects || []
-  // "In progress" = Active or Expedite; expedite sorted to the top
+  // "In progress" = Active or Expedite; plus recently-completed (within 7 days)
   const inProgress = all.filter(p => p.status === 'Active' || p.status === 'Expedite')
-  const activeProjects = [...inProgress]
-    .sort((a, b) => (a.status === 'Expedite' ? -1 : 0) - (b.status === 'Expedite' ? -1 : 0))
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const recentlyDone = all.filter(p => /^(completed|done)$/i.test(p.status) && p.completed_at && new Date(p.completed_at).getTime() >= weekAgo)
+  const rank = (p: typeof all[number]) => p.status === 'Expedite' ? 0 : /^(completed|done)$/i.test(p.status) ? 2 : 1
+  const activeProjects = [...inProgress, ...recentlyDone]
+    .sort((a, b) => rank(a) - rank(b))
     .slice(0, 15)
   const counts = {
     active: inProgress.length,
