@@ -23,7 +23,7 @@ export async function saveTextPad(projectId: string, content: string) {
     })
   }
 
-  await logProjectChange(projectId, undefined, 'notes')
+  await logProjectChange(projectId, 'notes')
   revalidatePath(`/projects/${projectId}`)
   return { success: true }
 }
@@ -59,7 +59,7 @@ export async function updateGridColumn(projectId: string, colIndex: number, head
     return { error: error.message }
   }
 
-  await logProjectChange(projectId, undefined, 'sheet')
+  await logProjectChange(projectId, 'sheet')
   revalidatePath(`/projects/${projectId}`)
   return { success: true }
 }
@@ -82,7 +82,7 @@ export async function saveGridCell(projectId: string, rowIndex: number, colIndex
     return { error: error.message }
   }
 
-  await logProjectChange(projectId, undefined, 'sheet')
+  await logProjectChange(projectId, 'sheet')
   revalidatePath(`/projects/${projectId}`)
   return { success: true }
 }

@@ -11,6 +11,23 @@ type Entry = {
   entity_id: string | null
   entity_name: string | null
   created_at: string
+  metadata?: Record<string, unknown> | null
+}
+
+const FIELD_LABELS: Record<string, string> = {
+  notes: 'Notes', sheet: 'Sheet', description: 'Description', title: 'Title',
+  image: 'Image', link: 'Download link', finalurl: 'Final URL',
+}
+
+// Human description of what an audit entry represents
+function describe(e: Entry): string {
+  const m = e.metadata as Record<string, unknown> | null | undefined
+  if (m?.new_status) return `status: ${m.old_status ?? '—'} → ${m.new_status}`
+  if (m?.old_role) return `role: ${m.old_role} → ${m.new_role}`
+  if (m?.kind === 'fields' && Array.isArray(m.fields)) {
+    return (m.fields as string[]).map(f => `${FIELD_LABELS[f] ?? f} modified`).join(', ')
+  }
+  return `${e.action.replace('_', ' ')} ${e.entity_type}`
 }
 
 const actionColor: Record<string, string> = {
@@ -50,9 +67,8 @@ export function RecentActivity({ entries }: { entries: Entry[] }) {
             <span className="text-muted-foreground tabular-nums whitespace-nowrap w-32 shrink-0">
               {new Date(e.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </span>
-            <span className={`font-semibold capitalize w-16 shrink-0 ${actionColor[e.action] ?? ''}`}>{e.action.replace('_', ' ')}</span>
-            <span className="text-muted-foreground shrink-0">{e.entity_type}</span>
-            <span className="font-medium truncate flex-1">{e.entity_name ?? '—'}</span>
+            <span className="font-semibold truncate max-w-[10rem] shrink-0">{e.entity_name ?? e.entity_type}</span>
+            <span className={`truncate flex-1 ${actionColor[e.action] ?? 'text-muted-foreground'}`}>{describe(e)}</span>
             <span className="text-muted-foreground truncate hidden sm:block max-w-[12rem]">{e.user_email}</span>
             {e.entity_type === 'project' && e.entity_id && (
               <Link href={`/projects/${e.entity_id}`} className="text-primary hover:underline shrink-0">view</Link>

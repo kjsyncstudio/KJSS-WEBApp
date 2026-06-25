@@ -9,7 +9,7 @@ import { PermissionsPanel } from './permissions-panel'
 import { UnresolvedPanel } from './unresolved-panel'
 
 type Member = { id: string; email: string; full_name: string | null; role: string; created_at: string }
-type Entry = { id: string; user_email: string; action: string; entity_type: string; entity_id: string | null; entity_name: string | null; created_at: string }
+type Entry = { id: string; user_email: string; action: string; entity_type: string; entity_id: string | null; entity_name: string | null; created_at: string; metadata?: Record<string, unknown> | null }
 type Deleted = { id: string; title: string; deleted_at: string; deleted_by?: string | null; clients?: { name: string } }
 type Client = { id: string; name: string }
 type Perm = { user_id: string; client_id: string; can_read: boolean; can_write: boolean }

@@ -19,7 +19,7 @@ export default async function AdminPage() {
 
   const { data: recentLog } = await supabase
     .from('audit_log')
-    .select('id, user_email, action, entity_type, entity_id, entity_name, created_at')
+    .select('id, user_email, action, entity_type, entity_id, entity_name, created_at, metadata')
     .order('created_at', { ascending: false })
     .limit(40)
 

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { logProjectChange } from '@/utils/audit'
 
 export async function addUploadLink(projectId: string, formData: FormData) {
   const supabase = await createClient()
@@ -20,13 +21,14 @@ export async function addUploadLink(projectId: string, formData: FormData) {
     return { error: error.message }
   }
 
+  await logProjectChange(projectId, 'link')
   revalidatePath(`/projects/${projectId}`)
   return { success: true }
 }
 
 export async function deleteUploadLink(projectId: string, linkId: string) {
   const supabase = await createClient()
-  
+
   const { error } = await supabase.from('project_upload_links').delete().eq('id', linkId)
 
   if (error) {
@@ -34,6 +36,7 @@ export async function deleteUploadLink(projectId: string, linkId: string) {
     return { error: error.message }
   }
 
+  await logProjectChange(projectId, 'link')
   revalidatePath(`/projects/${projectId}`)
   return { success: true }
 }
@@ -55,13 +58,14 @@ export async function addFinalUrl(projectId: string, formData: FormData) {
     return { error: error.message }
   }
 
+  await logProjectChange(projectId, 'finalurl')
   revalidatePath(`/projects/${projectId}`)
   return { success: true }
 }
 
 export async function deleteFinalUrl(projectId: string, urlId: string) {
   const supabase = await createClient()
-  
+
   const { error } = await supabase.from('project_final_urls').delete().eq('id', urlId)
 
   if (error) {
@@ -69,6 +73,7 @@ export async function deleteFinalUrl(projectId: string, urlId: string) {
     return { error: error.message }
   }
 
+  await logProjectChange(projectId, 'finalurl')
   revalidatePath(`/projects/${projectId}`)
   return { success: true }
 }

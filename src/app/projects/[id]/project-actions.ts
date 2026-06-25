@@ -2,13 +2,13 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { logAudit } from '@/utils/audit'
+import { logAudit, logProjectChange } from '@/utils/audit'
 
 export async function saveThumbnail(projectId: string, thumbnailUrl: string) {
   const supabase = await createClient()
   const { error } = await supabase.from('projects').update({ thumbnail_url: thumbnailUrl }).eq('id', projectId)
   if (error) return { error: error.message }
-  await logAudit({ action: 'update', entity_type: 'project', entity_id: projectId, metadata: { field: 'thumbnail_url' } })
+  await logProjectChange(projectId, 'image')
   revalidatePath(`/projects/${projectId}`)
   return { success: true }
 }
@@ -17,7 +17,7 @@ export async function saveDescription(projectId: string, description: string) {
   const supabase = await createClient()
   const { error } = await supabase.from('projects').update({ description }).eq('id', projectId)
   if (error) return { error: error.message }
-  await logAudit({ action: 'update', entity_type: 'project', entity_id: projectId, metadata: { field: 'description' } })
+  await logProjectChange(projectId, 'description')
   revalidatePath(`/projects/${projectId}`)
   return { success: true }
 }
