@@ -76,9 +76,11 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
   // Fetch role only for signed-in users; anonymous guests are always read-only
   let isAdmin = false
   let canManage = false
+  let role: string | undefined
   if (user) {
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    isAdmin = profile?.role === 'admin'
+    role = profile?.role
+    isAdmin = role === 'admin'
     canManage = isAdmin
     if (!isAdmin && project?.client_id) {
       const { data: perm } = await supabase
@@ -90,6 +92,9 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
       canManage = !!perm?.can_write
     }
   }
+
+  // Internal sections (notes, sheet, links) are hidden from guests (anon + guest role)
+  const showInternal = !!user && role !== 'guest'
 
   if (!project) {
     return (
@@ -156,25 +161,30 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
             canManage={canManage}
           />
 
-          <TextPad
-            projectId={project.id}
-            initialContent={textNote?.content || ''}
-            canManage={canManage}
-          />
+          {/* Internal sections — hidden from guests (anon + guest role) */}
+          {showInternal && (
+            <>
+              <TextPad
+                projectId={project.id}
+                initialContent={textNote?.content || ''}
+                canManage={canManage}
+              />
 
-          <ExcelGrid
-            projectId={project.id}
-            initialColumns={gridColumns || []}
-            initialCells={gridCells || []}
-            canManage={canManage}
-          />
+              <ExcelGrid
+                projectId={project.id}
+                initialColumns={gridColumns || []}
+                initialCells={gridCells || []}
+                canManage={canManage}
+              />
 
-          <ProjectLinks
-            projectId={project.id}
-            uploadLinks={uploadLinks || []}
-            finalUrls={finalUrls || []}
-            canManage={canManage}
-          />
+              <ProjectLinks
+                projectId={project.id}
+                uploadLinks={uploadLinks || []}
+                finalUrls={finalUrls || []}
+                canManage={canManage}
+              />
+            </>
+          )}
         </ProjectLiveProvider>
       </main>
     </div>
