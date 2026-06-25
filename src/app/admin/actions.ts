@@ -39,11 +39,13 @@ export async function inviteUser(formData: FormData) {
 }
 
 export async function updateUserRole(userId: string, newRole: string, userEmail: string) {
-  const { supabase } = await assertAdmin()
+  await assertAdmin()
+  const adminClient = createAdminClient()
 
-  const { data: oldProfile } = await supabase.from('profiles').select('role').eq('id', userId).single()
+  const { data: oldProfile } = await adminClient.from('profiles').select('role').eq('id', userId).single()
 
-  const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId)
+  // service role — RLS only lets users update their OWN profile, so admins need this
+  const { error } = await adminClient.from('profiles').update({ role: newRole }).eq('id', userId)
   if (error) return { error: error.message }
 
   await logAudit({
