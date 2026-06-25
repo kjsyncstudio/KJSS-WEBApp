@@ -20,7 +20,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <div className="text-center space-y-2">
           <Logo className="w-24 h-24 mx-auto object-contain mb-2" />
           <h1 className="text-2xl font-bold tracking-tight">Welcome Back</h1>
-          <p className="text-sm text-muted-foreground">Sign in to your Sync Studios account</p>
+          <p className="text-sm text-muted-foreground">Sign in to your KJ Sync Studio account</p>
         </div>
 
         <LoginForm defaultEmail={defaultEmail} hasError={hasError} />

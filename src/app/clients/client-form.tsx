@@ -2,20 +2,22 @@
 
 import { useState } from 'react'
 import { addClient } from './actions'
-import { ImageUploader } from '@/components/image-uploader'
+import { LogoInput } from '@/components/logo-input'
 
 export function ClientForm() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [logoUrl, setLogoUrl] = useState<string>('')
+  const [logoUrl, setLogoUrl] = useState('')
+  const [logoUpload, setLogoUpload] = useState('')
 
   async function onSubmit(formData: FormData) {
     setLoading(true)
     formData.set('logoUrl', logoUrl)
+    formData.set('logoUploadUrl', logoUpload)
     await addClient(formData)
     setLoading(false)
     setIsOpen(false)
-    setLogoUrl('')
+    setLogoUrl(''); setLogoUpload('')
   }
 
   if (!isOpen) {
@@ -37,26 +39,17 @@ export function ClientForm() {
           <button onClick={() => setIsOpen(false)} className="text-muted-foreground hover:text-foreground">✕</button>
         </div>
         <form action={onSubmit} className="flex flex-col gap-4">
-          <div className="flex gap-4 items-start">
-            <div className="shrink-0">
-              <label className="text-sm font-medium block mb-1.5">Logo</label>
-              <ImageUploader
-                folder="client-logos"
-                currentUrl={logoUrl || null}
-                onUploaded={setLogoUrl}
-                placeholder="Upload logo"
-              />
-            </div>
-            <div className="flex-1 flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="name" className="text-sm font-medium">Name *</label>
-                <input required type="text" id="name" name="name" className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="industry" className="text-sm font-medium">Industry *</label>
-                <input required type="text" id="industry" name="industry" className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-              </div>
-            </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="name" className="text-sm font-medium">Name *</label>
+            <input required type="text" id="name" name="name" className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="industry" className="text-sm font-medium">Industry *</label>
+            <input required type="text" id="industry" name="industry" className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium">Logo</label>
+            <LogoInput url={logoUrl} upload={logoUpload} onChange={({ url, upload }) => { setLogoUrl(url); setLogoUpload(upload) }} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

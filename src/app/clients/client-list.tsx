@@ -2,6 +2,7 @@
 
 import { deleteClient, updateClient } from './actions'
 import { useState, useEffect } from 'react'
+import { LogoInput } from '@/components/logo-input'
 
 type Client = {
   id: string
@@ -10,7 +11,11 @@ type Client = {
   year_start: number
   year_end: number | null
   logo_url: string | null
+  logo_upload_url: string | null
 }
+
+// Display priority: uploaded > url > placeholder
+const clientLogo = (c: Client) => c.logo_upload_url || c.logo_url || null
 
 type ViewMode = 'card' | 'list' | 'compact'
 
@@ -79,6 +84,14 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
   // Edit Modal State
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [editLogoUrl, setEditLogoUrl] = useState('')
+  const [editLogoUpload, setEditLogoUpload] = useState('')
+
+  function openEdit(c: Client) {
+    setEditLogoUrl(c.logo_url ?? '')
+    setEditLogoUpload(c.logo_upload_url ?? '')
+    setEditingClient(c)
+  }
 
   // Close context menu on document click
   useEffect(() => {
@@ -103,6 +116,8 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
   async function handleEditSubmit(formData: FormData) {
     if (!editingClient) return
     setIsEditing(true)
+    formData.set('logoUrl', editLogoUrl)
+    formData.set('logoUploadUrl', editLogoUpload)
     await updateClient(editingClient.id, formData)
     setIsEditing(false)
     setEditingClient(null)
@@ -120,8 +135,8 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
   }
 
   const Avatar = ({ client, size }: { client: Client; size: string }) =>
-    client.logo_url
-      ? <img src={client.logo_url} alt={client.name} className={`${size} rounded-full object-cover bg-secondary shrink-0`} />
+    clientLogo(client)
+      ? <img src={clientLogo(client)!} alt={client.name} className={`${size} rounded-full object-cover bg-secondary shrink-0`} />
       : <div className={`${size} rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-primary font-bold shrink-0`}>{client.name.charAt(0)}</div>
 
   return (
@@ -175,7 +190,7 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
 
               {canManage && (
                 <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={(e) => { e.stopPropagation(); setEditingClient(client) }}
+                  <button onClick={(e) => { e.stopPropagation(); openEdit(client) }}
                     className="text-xs text-primary hover:underline">
                     Edit
                   </button>
@@ -220,7 +235,7 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
                   <td className="px-4 py-3 text-right whitespace-nowrap">
                     {canManage && (
                       <span className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => setEditingClient(client)} className="text-xs text-primary hover:underline mr-3">Edit</button>
+                        <button onClick={() => openEdit(client)} className="text-xs text-primary hover:underline mr-3">Edit</button>
                         <button onClick={() => handleDelete(client.id)} disabled={deletingId === client.id}
                           className="text-xs text-destructive hover:underline disabled:opacity-50">Delete</button>
                       </span>
@@ -244,7 +259,7 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
               <span className="text-xs text-muted-foreground hidden md:block">{client.year_start} - {client.year_end || 'Present'}</span>
               {canManage && (
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 whitespace-nowrap">
-                  <button onClick={() => setEditingClient(client)} className="text-xs text-primary hover:underline mr-3">Edit</button>
+                  <button onClick={() => openEdit(client)} className="text-xs text-primary hover:underline mr-3">Edit</button>
                   <button onClick={() => handleDelete(client.id)} disabled={deletingId === client.id}
                     className="text-xs text-destructive hover:underline disabled:opacity-50">Delete</button>
                 </span>
@@ -263,7 +278,7 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
           <button 
             className="w-full text-left px-4 py-2 text-sm hover:bg-secondary transition-colors"
             onClick={() => {
-              setEditingClient(clients.find(c => c.id === contextMenu.clientId) || null)
+              { const c = clients.find(c => c.id === contextMenu.clientId); if (c) openEdit(c) }
               setContextMenu(null)
             }}
           >
@@ -311,8 +326,8 @@ export function ClientList({ clients, canManage }: { clients: Client[], canManag
                 </div>
               </div>
               <div className="flex flex-col gap-2">
-                <label htmlFor="edit-logoUrl" className="text-sm font-medium">Logo URL</label>
-                <input type="url" id="edit-logoUrl" name="logoUrl" defaultValue={editingClient.logo_url || ''} placeholder="https://..." className="bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                <label className="text-sm font-medium">Logo</label>
+                <LogoInput url={editLogoUrl} upload={editLogoUpload} onChange={({ url, upload }) => { setEditLogoUrl(url); setEditLogoUpload(upload) }} />
               </div>
               
               <div className="flex justify-end gap-3 mt-4">

@@ -26,7 +26,7 @@ export default async function Header() {
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Logo className="h-10 w-10 object-contain" />
-            <span className="font-semibold text-base hidden sm:block tracking-tight">Sync Studios</span>
+            <span className="font-semibold text-base hidden sm:block tracking-tight">KJ Sync Studio</span>
           </Link>
           {user && (
             <nav className="hidden md:flex items-center gap-4 text-sm font-medium text-muted-foreground">

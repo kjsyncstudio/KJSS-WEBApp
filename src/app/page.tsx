@@ -17,7 +17,7 @@ export default function Home() {
         <Logo className="w-28 h-28 object-contain" />
 
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Sync Studios</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">KJ Sync Studio</h1>
           <p className="text-muted-foreground">Manage your projects and clients in real-time.</p>
         </div>
 

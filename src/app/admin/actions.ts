@@ -21,8 +21,10 @@ export async function inviteUser(formData: FormData) {
   const role = formData.get('role') as string
   const fullName = formData.get('full_name') as string
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kjss-web-app.vercel.app'
   const { data, error } = await adminClient.auth.admin.inviteUserByEmail(email, {
     data: { full_name: fullName },
+    redirectTo: `${siteUrl}/auth/callback?next=/update-password`,
   })
   if (error) return { error: error.message }
 

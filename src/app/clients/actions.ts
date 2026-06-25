@@ -11,13 +11,15 @@ export async function addClient(formData: FormData) {
   const yearStart = parseInt(formData.get('yearStart') as string)
   const yearEnd = formData.get('yearEnd') ? parseInt(formData.get('yearEnd') as string) : null
   const logoUrl = formData.get('logoUrl') as string | null
-  
+  const logoUploadUrl = formData.get('logoUploadUrl') as string | null
+
   const { error } = await supabase.from('clients').insert({
     name,
     industry,
     year_start: yearStart,
     year_end: yearEnd,
-    logo_url: logoUrl
+    logo_url: logoUrl || null,
+    logo_upload_url: logoUploadUrl || null,
   })
 
   if (error) {
@@ -51,13 +53,15 @@ export async function updateClient(id: string, formData: FormData) {
   const yearStart = parseInt(formData.get('yearStart') as string)
   const yearEnd = formData.get('yearEnd') ? parseInt(formData.get('yearEnd') as string) : null
   const logoUrl = formData.get('logoUrl') as string | null
-  
+  const logoUploadUrl = formData.get('logoUploadUrl') as string | null
+
   const { error } = await supabase.from('clients').update({
     name,
     industry,
     year_start: yearStart,
     year_end: yearEnd,
-    logo_url: logoUrl
+    logo_url: logoUrl || null,
+    logo_upload_url: logoUploadUrl || null,
   }).eq('id', id)
 
   if (error) {
