@@ -6,25 +6,24 @@ import { isRedirectError } from 'next/dist/client/components/redirect-error'
 import { createClient } from '@/utils/supabase/server'
 
 export async function login(formData: FormData) {
+  const email = formData.get('email') as string
   try {
     const supabase = await createClient()
 
-    const data = {
-      email: formData.get('email') as string,
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
       password: formData.get('password') as string,
-    }
-
-    const { error } = await supabase.auth.signInWithPassword(data)
+    })
 
     if (error) {
-      redirect('/login?error=true')
+      redirect(`/login?error=true&email=${encodeURIComponent(email)}`)
     }
 
     revalidatePath('/', 'layout')
     redirect('/dashboard')
   } catch (err: unknown) {
     if (isRedirectError(err)) throw err
-    redirect('/login?error=true')
+    redirect(`/login?error=true&email=${encodeURIComponent(email ?? '')}`)
   }
 }
 

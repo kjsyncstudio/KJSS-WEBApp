@@ -1,10 +1,10 @@
-import Link from 'next/link'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { LoginButton } from './login-button'
+import { LoginForm } from './login-form'
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string; email?: string }> }) {
   const params = await searchParams
   const hasError = params?.error === 'true'
+  const defaultEmail = params?.email ?? ''
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Decorative background elements */}
@@ -24,40 +24,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <p className="text-sm text-muted-foreground">Sign in to your KJS Studio account</p>
         </div>
 
-        <form className="flex flex-col space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="email">Email</label>
-            <input 
-              id="email" 
-              name="email" 
-              type="email" 
-              required 
-              className="w-full px-3 py-2 bg-background/50 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-              placeholder="you@example.com"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="password">Password</label>
-            <input 
-              id="password" 
-              name="password" 
-              type="password" 
-              required 
-              className="w-full px-3 py-2 bg-background/50 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-            />
-          </div>
-
-          {hasError && (
-            <p className="text-sm text-red-500 text-center -mb-2">Invalid email or password.</p>
-          )}
-
-          <LoginButton />
-
-          <Link href="/forgot-password" className="text-sm text-center text-muted-foreground hover:text-foreground transition-colors">
-            Forgot password?
-          </Link>
-        </form>
+        <LoginForm defaultEmail={defaultEmail} hasError={hasError} />
       </div>
     </div>
   )
