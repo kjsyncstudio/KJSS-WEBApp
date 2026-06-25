@@ -8,11 +8,11 @@ import { CsvUploader } from './csv-uploader'
 type Client = { id: string; name: string }
 
 const DEFAULT_TYPES = ['Media Production', 'Event', 'Consultant', 'Other']
-const DEFAULT_STATUSES = ['Pending', 'Active', 'Shelved', 'Done']
+const DEFAULT_STATUSES = ['Active', 'Pending', 'Expedite', 'Completed']
 const STATUS_COLORS: Record<string, string> = {
   Active: 'text-green-500',
-  Done: 'text-blue-500',
-  Shelved: 'text-orange-500',
+  Expedite: 'text-amber-600',
+  Completed: 'text-blue-500',
   Pending: 'text-zinc-400',
 }
 

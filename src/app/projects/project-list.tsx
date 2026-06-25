@@ -3,6 +3,7 @@
 import { deleteProject, updateProjectStatus, bulkDeleteProjects, bulkUpdateProjects } from './actions'
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { StatusPills } from './status-pills'
 
 type Project = {
   id: string
@@ -20,13 +21,13 @@ type Client = { id: string; name: string }
 type ViewMode = 'card' | 'list' | 'compact'
 
 const DEFAULT_TYPES = ['Media Production', 'Event', 'Consultant', 'Other']
-const DEFAULT_STATUSES = ['Pending', 'Active', 'Shelved', 'Done']
+const DEFAULT_STATUSES = ['Active', 'Pending', 'Expedite', 'Completed']
 
 const statusColors: Record<string, string> = {
   Active: 'bg-green-500/10 text-green-500 border-green-500/20',
   Expedite: 'bg-amber-500/15 text-amber-600 border-amber-500/30',
+  Completed: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
   Done: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  Shelved: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
   Pending: 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20',
 }
 // ponytail: custom statuses get a neutral badge, no per-status color config
@@ -256,16 +257,7 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
             {selectMode ? 'Selecting…' : 'Select'}
           </button>
         )}
-        <div className="flex gap-2 overflow-x-auto pb-1 flex-1">
-          {['All', ...statusOpts].map(status => (
-            <button key={status} onClick={() => setFilter(status)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                filter === status ? 'bg-primary text-primary-foreground shadow-md' : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'
-              }`}>
-              {status}
-            </button>
-          ))}
-        </div>
+        <StatusPills options={['All', ...statusOpts]} active={filter} onSelect={setFilter} />
         {([['date', 'Date'], ['name', 'Name']] as const).map(([key, label]) => (
           <button key={key} onClick={() => flipSort(key)} title="Click to sort · click again to flip"
             className={`shrink-0 px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
@@ -411,8 +403,8 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
               )}
               <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                 project.status === 'Active' ? 'bg-green-500' :
-                project.status === 'Done' ? 'bg-blue-500' :
-                project.status === 'Shelved' ? 'bg-orange-500' : 'bg-zinc-400'}`} />
+                project.status === 'Expedite' ? 'bg-amber-500' :
+                /complete|done/i.test(project.status) ? 'bg-blue-500' : 'bg-zinc-400'}`} />
               <span onClick={() => router.push(`/projects/${project.id}`)}
                 className="font-medium text-sm hover:text-primary cursor-pointer transition-colors flex-1 truncate">
                 {project.title}
@@ -423,8 +415,8 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
                 ? <div onClick={e => e.stopPropagation()}><StatusSelect project={project} /></div>
                 : <span className={`text-xs font-medium ${
                     project.status === 'Active' ? 'text-green-500' :
-                    project.status === 'Done' ? 'text-blue-500' :
-                    project.status === 'Shelved' ? 'text-orange-500' : 'text-zinc-400'}`}>{project.status}</span>
+                    project.status === 'Expedite' ? 'text-amber-600' :
+                    /complete|done/i.test(project.status) ? 'text-blue-500' : 'text-zinc-400'}`}>{project.status}</span>
               }
               {canEdit(project) && (
                 <button onClick={() => handleDelete(project.id)} disabled={deletingId === project.id}

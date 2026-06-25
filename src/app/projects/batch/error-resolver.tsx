@@ -20,7 +20,7 @@ export type ErrorRow = ResolvedRow & {
 type Client = { id: string; name: string }
 
 const VALID_TYPES = ['Media Production', 'Event', 'Consultant', 'Other']
-const DEFAULT_STATUSES = ['Active', 'Pending', 'Shelved', 'Done']
+const DEFAULT_STATUSES = ['Active', 'Pending', 'Expedite', 'Completed']
 
 interface ErrorResolverProps {
   errorRows: ErrorRow[]
@@ -59,6 +59,9 @@ export function ErrorResolver({ errorRows, clients: initialClients, validStatuse
   const hasClientError = !effectiveClientId || !clients.find(c => c.id === effectiveClientId)
   const hasStatusError = !VALID_STATUSES.includes(effectiveStatus)
   const canProceed = !hasClientError && !hasStatusError
+  // keep the client picker visible for any row that started with a client problem
+  const rowHadClientError = current.errors.some(e => e.toLowerCase().includes('not found'))
+  const selectedClientName = clients.find(c => c.id === effectiveClientId)?.name
 
   async function handleCreateClient() {
     if (!newClientName.trim() || !newClientIndustry.trim()) { setCreateError('Name and industry required.'); return }
@@ -155,20 +158,27 @@ export function ErrorResolver({ errorRows, clients: initialClients, validStatuse
         <div className="glass bg-muted/20 rounded-xl p-4 space-y-1">
           <p className="font-semibold text-sm">{current.title}</p>
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-            {current.errors.map((e, i) => (
+            {current.errors.filter(e => {
+              const low = e.toLowerCase()
+              if (low.includes('not found') && selectedClientName) return false  // client resolved
+              if (low.includes('status') && !hasStatusError) return false        // status resolved
+              return true
+            }).map((e, i) => (
               <span key={i} className="bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full">{e}</span>
             ))}
           </div>
         </div>
 
         {/* Client resolution */}
-        {hasClientError && (
+        {rowHadClientError && (
           <div className="space-y-2">
             <label className="text-sm font-medium">
-              Client <span className="text-muted-foreground font-normal">"{current.rawClientName}" not found</span>
+              {selectedClientName
+                ? <>Confirm project belongs to <span className="text-primary font-semibold">&quot;{selectedClientName}&quot;</span>?</>
+                : <>Client <span className="text-red-500 font-normal">&quot;{current.rawClientName}&quot; not found</span></>}
             </label>
 
-            {autoClient && (
+            {!selectedClientName && autoClient && (
               <p className="text-xs text-primary">Auto-applying previous resolution: {autoClient.clientName}</p>
             )}
 

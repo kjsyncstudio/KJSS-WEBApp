@@ -103,10 +103,11 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
     )
   }
 
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     Active: 'bg-green-500/10 text-green-500 border-green-500/20',
+    Expedite: 'bg-amber-500/15 text-amber-600 border-amber-500/30',
+    Completed: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
     Done: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-    Shelved: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
     Pending: 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20',
   }
 
@@ -132,7 +133,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
               {isAdmin && (
                 <GuestToggle projectId={project.id} guestViewable={project.guest_viewable ?? false} />
               )}
-              <div className={`px-3 py-1 rounded-full text-sm font-semibold border ${statusColors[project.status as keyof typeof statusColors]}`}>
+              <div className={`px-3 py-1 rounded-full text-sm font-semibold border ${statusColors[project.status] ?? statusColors.Pending}`}>
                 {project.status}
               </div>
             </div>

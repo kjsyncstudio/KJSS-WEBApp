@@ -51,6 +51,16 @@ export async function deleteSetting(kind: Kind, value: string) {
   return { success: true }
 }
 
+export async function resolveProject(id: string, clientId: string, status: string) {
+  const { supabase } = await assertAdmin()
+  if (!clientId || !status) return { error: 'Client and status required.' }
+  const { error } = await supabase.from('projects').update({ client_id: clientId, status }).eq('id', id)
+  if (error) return { error: error.message }
+  await logAudit({ action: 'update', entity_type: 'project', entity_id: id, metadata: { resolved: true } })
+  revalidatePath('/admin'); revalidatePath('/projects')
+  return { success: true }
+}
+
 export async function restoreProject(id: string) {
   const { supabase } = await assertAdmin()
   const { data: p } = await supabase.from('projects').select('title').eq('id', id).single()

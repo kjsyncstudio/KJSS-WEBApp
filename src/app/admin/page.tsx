@@ -36,6 +36,13 @@ export default async function AdminPage() {
   const { data: clients } = await supabase.from('clients').select('id, name').order('name')
   const { data: permissions } = await supabase.from('client_permissions').select('user_id, client_id, can_read, can_write')
 
+  // Unresolved = missing client or a status outside the valid set
+  const { data: liveProjects } = await supabase
+    .from('projects')
+    .select('id, title, status, client_id, clients ( name )')
+    .is('deleted_at', null)
+  const unresolved = (liveProjects || []).filter(p => !p.client_id || !p.status || !statuses.includes(p.status))
+
   // Who deleted each project (latest delete entry per project from audit log)
   const { data: delLog } = await supabase
     .from('audit_log')
@@ -63,6 +70,7 @@ export default async function AdminPage() {
           deleted={deletedEnriched as never}
           clients={clients || []}
           permissions={permissions || []}
+          unresolved={unresolved as never}
         />
       </main>
     </div>

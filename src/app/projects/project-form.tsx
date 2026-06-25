@@ -9,7 +9,7 @@ type Client = {
 }
 
 const DEFAULT_TYPES = ['Media Production', 'Event', 'Consultant', 'Other']
-const DEFAULT_STATUSES = ['Pending', 'Active', 'Shelved', 'Done']
+const DEFAULT_STATUSES = ['Active', 'Pending', 'Expedite', 'Completed']
 
 export function ProjectForm({ clients, statuses, types }: { clients: Client[]; statuses?: string[]; types?: string[] }) {
   const typeOpts = types?.length ? types : DEFAULT_TYPES
