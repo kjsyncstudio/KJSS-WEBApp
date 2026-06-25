@@ -494,7 +494,7 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
                 project.status === 'Active' ? 'bg-green-500' :
                 project.status === 'Expedite' ? 'bg-amber-500' :
                 /complete|done/i.test(project.status) ? 'bg-blue-500' : 'bg-zinc-400'}`} />
-              <span className="text-xs text-muted-foreground hidden sm:block truncate max-w-[8rem] shrink-0">{project.clients?.name}</span>
+              <span className="text-xs text-muted-foreground hidden sm:block truncate w-32 shrink-0 pr-2">{project.clients?.name}</span>
               {editTitleId === project.id ? <div className="flex-1">{titleInput(project.id)}</div> : (
                 <span onClick={() => router.push(`/projects/${project.id}`)}
                   className="font-medium text-sm hover:text-primary cursor-pointer transition-colors flex-1 truncate">
