@@ -57,7 +57,7 @@ do $$ begin create policy "Admins manage project settings." on public.project_se
   for all using (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'));
 exception when duplicate_object then null; end $$;
 insert into public.project_settings (kind, value, sort) values
-  ('status','Pending',0),('status','Active',1),('status','Shelved',2),('status','Done',3),
+  ('status','Active',0),('status','Pending',1),('status','Expedite',2),('status','Completed',3),
   ('type','Media Production',0),('type','Event',1),('type','Consultant',2),('type','Other',3)
 on conflict (kind, value) do nothing;
 
