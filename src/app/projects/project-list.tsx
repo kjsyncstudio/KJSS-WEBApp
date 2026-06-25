@@ -77,7 +77,7 @@ export function ProjectList({ projects, canManage, clients = [], statuses, types
   }, [])
   const changeView = (v: ViewMode) => { setView(v); localStorage.setItem('projectView', v) }
   const [selectMode, setSelectMode] = useState(false)
-  const [hideCompleted, setHideCompleted] = useState(false)
+  const [hideCompleted, setHideCompleted] = useState(true)
   const [clientFilter, setClientFilter] = useState<string>('all')
   const [sortKey, setSortKey] = useState<'date' | 'name'>('date')
   const [sortAsc, setSortAsc] = useState(false) // default: latest first

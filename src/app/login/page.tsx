@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { login } from './actions'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { LoginButton } from './login-button'
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const params = await searchParams
@@ -52,12 +52,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             <p className="text-sm text-red-500 text-center -mb-2">Invalid email or password.</p>
           )}
 
-          <button
-            formAction={login}
-            className="w-full py-2.5 px-4 bg-primary text-primary-foreground font-semibold rounded-md shadow-md hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-[0.98] mt-2"
-          >
-            Sign In
-          </button>
+          <LoginButton />
 
           <Link href="/forgot-password" className="text-sm text-center text-muted-foreground hover:text-foreground transition-colors">
             Forgot password?
